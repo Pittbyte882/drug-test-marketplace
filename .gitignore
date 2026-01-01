@@ -1,11 +1,6 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-git init
-```
 
----
 
-## **Step 3: Add a .gitignore File (IMPORTANT!)**
 
 Create a file called `.gitignore` in your project root with this content:
 ```
