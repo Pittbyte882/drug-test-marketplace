@@ -1,7 +1,7 @@
 import { Suspense } from "react"
 import { SiteHeader } from "@/components/site-header"
 import { CartProvider } from "@/lib/cart-context"
-import ConfirmationContent from "@/components/confirmation-content"
+import ConfirmationContent from "../../components/confirmation-content"
 
 export default function ConfirmationPage() {
   return (
