@@ -11,12 +11,11 @@ export default function HomePage() {
 
         <section className="container py-16">
           <div className="mx-auto max-w-4xl">
-            <h2 className="mb-6 text-3xl font-bold text-foreground">Take the First Step Toward Recovery</h2>
+            <h2 className="mb-6 text-3xl font-bold text-foreground">A Testing Marketplace Built for Convenience, Compliance & Choice</h2>
             <p className="mb-4 text-lg leading-relaxed text-muted-foreground">
-              If you or someone close to you is facing addiction, you don't have to navigate it alone. Speak with
-              someone who can help guide you toward recovery.
+              Talcada is a modern testing marketplace that gives users access to multiple test types, providers, and collection options in one place. Whether you’re ordering a drug test for employment, a DNA test, or a clinical lab test, Talcada helps you compare options and order with confidence.
             </p>
-            <p className="font-semibold text-foreground">Days / Hours: Mon-Sun | 9am-9pm EST</p>
+            <p className="font-semibold text-foreground">The Talcada Marketplace</p>
           </div>
         </section>
 

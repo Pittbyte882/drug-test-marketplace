@@ -72,10 +72,10 @@ export function SiteHeader() {
     <header className="sticky top-0 z-50 w-full border-b bg-white">
       <div className="border-b bg-muted/30">
         <div className="container flex h-10 items-center justify-end gap-4 text-sm">
-          <span className="text-muted-foreground">Drug & Alcohol Addiction Hotline</span>
+          <span className="text-muted-foreground">Talcada Customer Service</span>
           <a href="tel:8334611709" className="flex items-center gap-1 font-semibold text-foreground hover:text-primary">
             <Phone className="h-4 w-4" />
-            (833) 461-1709
+            (800) 460-8598
           </a>
           <Button asChild size="sm" className="ml-4 bg-primary text-primary-foreground hover:bg-primary/90">
             <Link href="/search">Order A Test Near You</Link>

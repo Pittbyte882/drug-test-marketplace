@@ -33,9 +33,16 @@ export function HeroSection() {
           <h1 className="mb-4 text-5xl font-bold md:text-6xl">
             Talcada Marketplace
           </h1>
+          
           <p className="mb-8 text-xl text-slate-300">
-            Testing locations everywhere.
+            Testing locations everywhere. 
           </p>
+          
+          <p className="mb-8 text-m text-slate-300">
+             Order Diagnostic, Drug & DNA Tests Online
+          </p>
+          
+          
 
           <form onSubmit={handleSearch} className="mx-auto mb-8 flex max-w-2xl gap-4">
             <Input
