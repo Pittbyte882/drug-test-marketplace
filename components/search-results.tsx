@@ -96,26 +96,43 @@ export function SearchResults() {
   }, [city, state, zipCode, toast])
 
   const handleAddToCart = (location: SearchResult, test: Test) => {
-    addItem({
-      company: location.companies,
-      location: {
-        id: location.id,
-        name: location.name,
-        address: location.address,
-        city: location.city,
-        state: location.state,
-        zip_code: location.zip_code,
-        phone: location.phone,
-      },
-      test: test,
-      quantity: 1,
-    })
+  addItem({
+    company: location.companies,
+    location: {
+      id: location.id,
+      name: location.name,
+      address: location.address,
+      city: location.city,
+      state: location.state,
+      zip_code: location.zip_code,
+      phone: location.phone,
+    },
+    test: test,
+    quantity: 1,
+  })
 
-    toast({
-      title: "Added to cart",
-      description: `${test.name} at ${location.companies.name}`,
-    })
-  }
+  toast({
+    title: "Added to cart",
+    description: `${test.name} at ${location.companies.name}`,
+    action: (
+      <div className="flex gap-2">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => window.location.href = '/search'}
+        >
+          Continue Shopping
+        </Button>
+        <Button
+          size="sm"
+          onClick={() => window.location.href = '/cart'}
+        >
+          View Cart
+        </Button>
+      </div>
+    ),
+  })
+}
 
   const getSearchLocation = () => {
     if (city && state) return `${city}, ${state}`
