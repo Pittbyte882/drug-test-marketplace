@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { MapPin, Phone, Clock, ShoppingCart } from "lucide-react"
 import { useCart } from "@/lib/cart-context"
 import { useToast } from "@/hooks/use-toast"
-import { LocationMap } from "@/components/location-map"
+import { LocationMap } from "./location-map"
 
 interface Company {
   id: string
