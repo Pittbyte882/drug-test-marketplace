@@ -8,7 +8,6 @@ import { Badge } from "@/components/ui/badge"
 import { MapPin, Phone, Clock, ShoppingCart } from "lucide-react"
 import { useCart } from "@/lib/cart-context"
 import { useToast } from "@/hooks/use-toast"
-import { LocationMap } from "./location-map"
 
 interface Company {
   id: string
@@ -310,7 +309,20 @@ export function SearchResults() {
         {/* Map */}
         <div className="lg:sticky lg:top-20 lg:h-[calc(100vh-6rem)]">
           <Card className="h-full overflow-hidden border-border/50 shadow-sm">
-            <LocationMap locations={results} />
+            <div className="flex h-full items-center justify-center bg-muted/20 p-8 text-center">
+              <div>
+                <MapPin className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+                <p className="text-lg font-medium text-primary">Map View</p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Showing {results.length} testing location{results.length !== 1 ? 's' : ''}
+                </p>
+                {results.length > 0 && (
+                  <div className="mt-4 text-xs text-muted-foreground">
+                    {results[0].city}, {results[0].state}
+                  </div>
+                )}
+              </div>
+            </div>
           </Card>
         </div>
       </div>
