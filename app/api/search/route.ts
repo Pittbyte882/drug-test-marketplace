@@ -8,7 +8,7 @@ export async function GET(request: Request) {
     let state = searchParams.get("state") || ""
     const zipCode = searchParams.get("zip_code") || ""
 
-    // Handle "City, State" format (e.g., "Temecula, CA" or "temecula ca")
+    // Handle "City, State" format (e.g., "Los Angeles, CA")
     if (city && city.includes(",")) {
       const parts = city.split(",").map(p => p.trim())
       city = parts[0]
@@ -16,12 +16,10 @@ export async function GET(request: Request) {
     }
 
     // If city contains a space and two letters at the end, assume it's "City ST" format
-    // e.g., "Temecula CA" or "Los Angeles CA"
     if (city && !state) {
       const parts = city.trim().split(/\s+/)
       if (parts.length >= 2) {
         const lastPart = parts[parts.length - 1]
-        // Check if last part is 2 letters (likely a state abbreviation)
         if (lastPart.length === 2 && /^[A-Za-z]+$/.test(lastPart)) {
           state = lastPart
           city = parts.slice(0, -1).join(" ")
@@ -48,8 +46,7 @@ export async function GET(request: Request) {
       .from("locations")
       .select(`
         *,
-        companies (*),
-        tests:tests!tests_company_id_fkey (*)
+        companies (*)
       `)
       .eq("is_active", true)
 
@@ -64,29 +61,42 @@ export async function GET(request: Request) {
       query = query.eq("zip_code", zipCode)
     }
 
-    const { data: locations, error } = await query
+    const { data: locations, error: locationsError } = await query
 
-    if (error) {
-      console.error("Supabase error:", error)
-      throw error
+    if (locationsError) {
+      console.error("Supabase error:", locationsError)
+      throw locationsError
     }
 
-    // Filter out locations without active companies or tests
+    // Filter out locations without active companies
     const validLocations = (locations || []).filter(
-      (location) =>
-        location.companies?.is_active &&
-        location.tests?.some((test: any) => test.is_active)
+      (location) => location.companies?.is_active
     )
 
-    // Filter tests to only include active ones
-    const locationsWithActiveTests = validLocations.map((location) => ({
+    // Now get tests for each company
+    const locationIds = validLocations.map(loc => loc.company_id)
+    const uniqueCompanyIds = [...new Set(locationIds)]
+
+    const { data: tests, error: testsError } = await supabase
+      .from("tests")
+      .select("*")
+      .in("company_id", uniqueCompanyIds)
+      .eq("is_active", true)
+
+    if (testsError) {
+      console.error("Tests error:", testsError)
+      throw testsError
+    }
+
+    // Attach tests to each location
+    const locationsWithTests = validLocations.map(location => ({
       ...location,
-      tests: location.tests?.filter((test: any) => test.is_active) || [],
+      tests: (tests || []).filter(test => test.company_id === location.company_id)
     }))
 
     return NextResponse.json({
       success: true,
-      data: locationsWithActiveTests,
+      data: locationsWithTests,
     })
   } catch (error: any) {
     console.error("Search error:", error)
