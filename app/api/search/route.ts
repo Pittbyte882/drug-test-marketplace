@@ -7,15 +7,16 @@ export async function GET(request: Request) {
     let city = searchParams.get("city") || ""
     let state = searchParams.get("state") || ""
     const zipCode = searchParams.get("zip_code") || ""
+    const testType = searchParams.get("test_type") || "" // NEW
 
-    // Handle "City, State" format (e.g., "Los Angeles, CA")
+    // Handle "City, State" format
     if (city && city.includes(",")) {
       const parts = city.split(",").map(p => p.trim())
       city = parts[0]
       state = parts[1] || state
     }
 
-    // If city contains a space and two letters at the end, assume it's "City ST" format
+    // Handle "City ST" format
     if (city && !state) {
       const parts = city.trim().split(/\s+/)
       if (parts.length >= 2) {
@@ -27,7 +28,7 @@ export async function GET(request: Request) {
       }
     }
 
-    // Normalize: capitalize city, uppercase state
+    // Normalize
     if (city) {
       city = city
         .toLowerCase()
@@ -39,7 +40,7 @@ export async function GET(request: Request) {
       state = state.trim().toUpperCase()
     }
 
-    console.log("Searching with:", { city, state, zipCode })
+    console.log("Searching with:", { city, state, zipCode, testType })
 
     // Build the query
     let query = supabase
@@ -50,7 +51,7 @@ export async function GET(request: Request) {
       `)
       .eq("is_active", true)
 
-    // Add filters
+    // Add location filters
     if (city) {
       query = query.ilike("city", city)
     }
@@ -73,15 +74,22 @@ export async function GET(request: Request) {
       (location) => location.companies?.is_active
     )
 
-    // Now get tests for each company
+    // Get tests for each company
     const locationIds = validLocations.map(loc => loc.company_id)
     const uniqueCompanyIds = [...new Set(locationIds)]
 
-    const { data: tests, error: testsError } = await supabase
+    let testsQuery = supabase
       .from("tests")
       .select("*")
       .in("company_id", uniqueCompanyIds)
       .eq("is_active", true)
+
+    // NEW: Filter by test type if provided
+    if (testType) {
+      testsQuery = testsQuery.ilike("test_type", `%${testType}%`)
+    }
+
+    const { data: tests, error: testsError } = await testsQuery
 
     if (testsError) {
       console.error("Tests error:", testsError)
@@ -94,9 +102,14 @@ export async function GET(request: Request) {
       tests: (tests || []).filter(test => test.company_id === location.company_id)
     }))
 
+    // NEW: Filter out locations with no matching tests if test_type is specified
+    const filteredLocations = testType 
+      ? locationsWithTests.filter(loc => loc.tests.length > 0)
+      : locationsWithTests
+
     return NextResponse.json({
       success: true,
-      data: locationsWithTests,
+      data: filteredLocations,
     })
   } catch (error: any) {
     console.error("Search error:", error)

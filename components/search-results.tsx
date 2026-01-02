@@ -187,14 +187,18 @@ export function SearchResults() {
 
   return (
     <div className="container py-12">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-primary">
-          Testing Locations near {getSearchLocation()}
-        </h1>
-        <p className="mt-2 text-muted-foreground">
-          {results.length} {results.length === 1 ? "location" : "locations"} found
-        </p>
-      </div>
+              <div className="mb-8">
+          <h1 className="text-3xl font-bold text-primary">
+            {searchParams.get("test_type") 
+              ? `${searchParams.get("test_type")?.charAt(0).toUpperCase()}${searchParams.get("test_type")?.slice(1)} Testing Locations`
+              : "Testing Locations"
+            }
+            {(city || state || zipCode) && ` near ${getSearchLocation()}`}
+          </h1>
+          <p className="mt-2 text-muted-foreground">
+            {results.length} {results.length === 1 ? "location" : "locations"} found
+          </p>
+        </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
