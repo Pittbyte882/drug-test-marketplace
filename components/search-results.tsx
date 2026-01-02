@@ -309,20 +309,29 @@ export function SearchResults() {
         {/* Map */}
         <div className="lg:sticky lg:top-20 lg:h-[calc(100vh-6rem)]">
           <Card className="h-full overflow-hidden border-border/50 shadow-sm">
-            <div className="flex h-full items-center justify-center bg-muted/20 p-8 text-center">
-              <div>
-                <MapPin className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                <p className="text-lg font-medium text-primary">Map View</p>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Showing {results.length} testing location{results.length !== 1 ? 's' : ''}
-                </p>
-                {results.length > 0 && (
-                  <div className="mt-4 text-xs text-muted-foreground">
-                    {results[0].city}, {results[0].state}
-                  </div>
-                )}
+            {results.length > 0 ? (
+              <iframe
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                loading="lazy"
+                allowFullScreen
+                referrerPolicy="no-referrer-when-downgrade"
+                src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=${encodeURIComponent(
+                  `${results[0].address}, ${results[0].city}, ${results[0].state} ${results[0].zip_code}`
+                )}&zoom=14`}
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center bg-muted/20 p-8 text-center">
+                <div>
+                  <MapPin className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+                  <p className="text-lg font-medium text-primary">Map View</p>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    Search for a location to see the map
+                  </p>
+                </div>
               </div>
-            </div>
+            )}
           </Card>
         </div>
       </div>
