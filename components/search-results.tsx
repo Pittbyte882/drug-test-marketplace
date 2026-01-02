@@ -111,15 +111,21 @@ export function SearchResults() {
     quantity: 1,
   })
 
+  // Get current search parameters to return to same results
+  const currentParams = new URLSearchParams()
+  if (city) currentParams.append("city", city)
+  if (state) currentParams.append("state", state)
+  if (zipCode) currentParams.append("zip_code", zipCode)
+  const searchUrl = `/search?${currentParams.toString()}`
+
   toast({
     title: "Added to cart",
-    description: `${test.name} at ${location.companies.name}`,
-    action: (
-      <div className="flex gap-2">
+    description: (
+      <div className="flex gap-2 mt-2">
         <Button
           size="sm"
           variant="outline"
-          onClick={() => window.location.href = '/search'}
+          onClick={() => window.location.href = searchUrl}
         >
           Continue Shopping
         </Button>
