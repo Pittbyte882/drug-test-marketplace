@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { MapPin, Phone, Clock, ShoppingCart } from "lucide-react"
 import { useCart } from "@/lib/cart-context"
 import { useToast } from "@/hooks/use-toast"
+import { LocationMap } from "@/components/location-map"
 
 interface Company {
   id: string
@@ -17,7 +18,7 @@ interface Company {
   phone?: string
   email?: string
   website?: string
-  hours_of_operation?: string // ADD THIS LINE
+  hours_of_operation?: string
 }
 
 interface Location {
@@ -29,6 +30,8 @@ interface Location {
   state: string
   zip_code: string
   phone?: string
+  latitude?: number | null
+  longitude?: number | null
   companies: Company
 }
 
@@ -304,18 +307,10 @@ export function SearchResults() {
           )}
         </div>
 
-        {/* Map Placeholder */}
+        {/* Map */}
         <div className="lg:sticky lg:top-20 lg:h-[calc(100vh-6rem)]">
           <Card className="h-full overflow-hidden border-border/50 shadow-sm">
-            <div className="flex h-full items-center justify-center bg-muted/20 p-8 text-center">
-              <div>
-                <MapPin className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                <p className="text-lg font-medium text-primary">Map View</p>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Interactive map showing all testing locations will appear here once integrated with mapping service.
-                </p>
-              </div>
-            </div>
+            <LocationMap locations={results} />
           </Card>
         </div>
       </div>

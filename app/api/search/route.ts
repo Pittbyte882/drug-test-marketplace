@@ -4,73 +4,95 @@ import { supabase } from "@/lib/supabase"
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
-    const city = searchParams.get('city')
-    const state = searchParams.get('state')
-    const zipCode = searchParams.get('zip_code')
+    let city = searchParams.get("city") || ""
+    let state = searchParams.get("state") || ""
+    const zipCode = searchParams.get("zip_code") || ""
 
-    let query = supabase
-      .from('locations')
-      .select(`
-        *,
-        companies (
-          id,
-          name,
-          description,
-          logo_url,
-          phone,
-          email,
-          website
-        )
-      `)
-      .eq('is_active', true)
-      .eq('companies.is_active', true)
+    // Handle "City, State" format (e.g., "Temecula, CA" or "temecula ca")
+    if (city && city.includes(",")) {
+      const parts = city.split(",").map(p => p.trim())
+      city = parts[0]
+      state = parts[1] || state
+    }
 
+    // If city contains a space and two letters at the end, assume it's "City ST" format
+    // e.g., "Temecula CA" or "Los Angeles CA"
+    if (city && !state) {
+      const parts = city.trim().split(/\s+/)
+      if (parts.length >= 2) {
+        const lastPart = parts[parts.length - 1]
+        // Check if last part is 2 letters (likely a state abbreviation)
+        if (lastPart.length === 2 && /^[A-Za-z]+$/.test(lastPart)) {
+          state = lastPart
+          city = parts.slice(0, -1).join(" ")
+        }
+      }
+    }
+
+    // Normalize: capitalize city, uppercase state
     if (city) {
-      query = query.ilike('city', `%${city}%`)
+      city = city
+        .toLowerCase()
+        .split(" ")
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ")
     }
     if (state) {
-      query = query.eq('state', state)
+      state = state.trim().toUpperCase()
+    }
+
+    console.log("Searching with:", { city, state, zipCode })
+
+    // Build the query
+    let query = supabase
+      .from("locations")
+      .select(`
+        *,
+        companies (*),
+        tests:tests!tests_company_id_fkey (*)
+      `)
+      .eq("is_active", true)
+
+    // Add filters
+    if (city) {
+      query = query.ilike("city", city)
+    }
+    if (state) {
+      query = query.ilike("state", state)
     }
     if (zipCode) {
-      query = query.eq('zip_code', zipCode)
+      query = query.eq("zip_code", zipCode)
     }
 
-    const { data: locations, error } = await query.order('city')
+    const { data: locations, error } = await query
 
-    if (error) throw error
+    if (error) {
+      console.error("Supabase error:", error)
+      throw error
+    }
 
-    // Get tests for each company
-    const companyIds = [...new Set(locations.map(loc => loc.company_id))]
-    
-    const { data: tests, error: testsError } = await supabase
-      .from('tests')
-      .select('*')
-      .in('company_id', companyIds)
-      .eq('is_active', true)
+    // Filter out locations without active companies or tests
+    const validLocations = (locations || []).filter(
+      (location) =>
+        location.companies?.is_active &&
+        location.tests?.some((test: any) => test.is_active)
+    )
 
-    if (testsError) throw testsError
-
-    // Group tests by company
-    const testsByCompany = tests.reduce((acc: any, test) => {
-      if (!acc[test.company_id]) {
-        acc[test.company_id] = []
-      }
-      acc[test.company_id].push(test)
-      return acc
-    }, {})
-
-    // Combine data
-    const results = locations.map(location => ({
+    // Filter tests to only include active ones
+    const locationsWithActiveTests = validLocations.map((location) => ({
       ...location,
-      tests: testsByCompany[location.company_id] || [],
+      tests: location.tests?.filter((test: any) => test.is_active) || [],
     }))
 
     return NextResponse.json({
       success: true,
-      data: results,
+      data: locationsWithActiveTests,
     })
   } catch (error: any) {
-    console.error("Error searching locations:", error)
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 })
+    console.error("Search error:", error)
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: 500 }
+    )
   }
 }

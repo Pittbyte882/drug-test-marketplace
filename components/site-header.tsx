@@ -86,9 +86,11 @@ export function SiteHeader() {
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center space-x-2">
-            <div className="rounded bg-brand-blue px-3 py-1">
-              <span className="text-xl font-bold text-white">Talcada</span>
-            </div>
+            <img 
+              src="https://www.talcada.com/wp-content/uploads/2024/12/Talcada-Logo-Trans-624-x-153-px.png" 
+              alt="Talcada" 
+              className="h-10 w-auto"
+            />
           </Link>
 
           <nav className="hidden lg:flex items-center gap-6">
