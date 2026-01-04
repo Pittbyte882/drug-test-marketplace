@@ -5,7 +5,8 @@ import { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { MapPin, Phone, Clock, ShoppingCart } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { MapPin, Phone, Clock, ShoppingCart, Search } from "lucide-react"
 import { useCart } from "@/lib/cart-context"
 import { useToast } from "@/hooks/use-toast"
 
@@ -173,32 +174,74 @@ export function SearchResults() {
   }
 
   if (!city && !state && !zipCode) {
-    return (
-      <div className="container py-12">
-        <Card className="p-8 text-center">
-          <h2 className="text-2xl font-bold text-primary mb-4">Search for Testing Locations</h2>
-          <p className="text-muted-foreground">
-            Please enter a city, state, or zip code to find testing locations near you.
-          </p>
-        </Card>
-      </div>
-    )
-  }
-
   return (
     <div className="container py-12">
-              <div className="mb-8">
-          <h1 className="text-3xl font-bold text-primary">
-            {searchParams.get("test_type") 
-              ? `${searchParams.get("test_type")?.charAt(0).toUpperCase()}${searchParams.get("test_type")?.slice(1)} Testing Locations`
-              : "Testing Locations"
+      {/* Search Bar */}
+      <div className="mb-8">
+        <form 
+          onSubmit={(e) => {
+            e.preventDefault()
+            const formData = new FormData(e.currentTarget)
+            const searchValue = formData.get('search') as string
+            if (searchValue.trim()) {
+              const params = new URLSearchParams()
+              params.append("city", searchValue.trim())
+              if (searchParams.get("test_type")) {
+                params.append("test_type", searchParams.get("test_type")!)
+              }
+              window.location.href = `/search?${params.toString()}`
             }
-            {(city || state || zipCode) && ` near ${getSearchLocation()}`}
-          </h1>
-          <p className="mt-2 text-muted-foreground">
-            {results.length} {results.length === 1 ? "location" : "locations"} found
-          </p>
-        </div>
+          }}
+          className="mx-auto flex max-w-2xl gap-4"
+        >
+          <Input
+            type="text"
+            name="search"
+            placeholder="Enter city, state, or zip code"
+            className="h-14 flex-1 bg-white text-slate-900"
+          />
+          <Button
+            type="submit"
+            size="lg"
+            className="h-14 bg-[#F59E0B] px-8 font-semibold text-slate-900 hover:bg-[#F59E0B]/90"
+          >
+            <Search className="mr-2 h-5 w-5" />
+            SEARCH
+          </Button>
+        </form>
+      </div>
+
+      <Card className="p-8 text-center">
+        <h2 className="text-2xl font-bold text-primary mb-4">
+          {searchParams.get("test_type") 
+            ? `${searchParams.get("test_type")?.charAt(0).toUpperCase()}${searchParams.get("test_type")?.slice(1)} Testing Locations`
+            : "Search for Testing Locations"
+          }
+        </h2>
+        <p className="text-muted-foreground">
+          Please enter a city, state, or zip code to find testing locations near you.
+        </p>
+      </Card>
+    </div>
+  )
+}
+
+  return (
+  
+  <div className="container py-12">
+    <div className="mb-8">
+      <h1 className="text-3xl font-bold text-primary">
+        {searchParams.get("test_type") 
+          ? `${searchParams.get("test_type")?.charAt(0).toUpperCase()}${searchParams.get("test_type")?.slice(1)} Testing Locations`
+          : "Testing Locations"
+        }
+        {(city || state || zipCode) && ` near ${getSearchLocation()}`}
+      </h1>
+      <p className="mt-2 text-muted-foreground">
+        {results.length} {results.length === 1 ? "location" : "locations"} found
+      </p>
+    </div> 
+   
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">

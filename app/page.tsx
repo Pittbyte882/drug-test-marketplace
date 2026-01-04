@@ -20,8 +20,8 @@ export default function HomePage() {
         </section>
 
         <section className="bg-muted/30 py-16">
-          <div className="container">
-            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+          <div className="container ">
+            <div className="mx-auto max-w-6xl grid gap-8 md:grid-cols-2 lg:grid-cols-4">
               <div className="rounded-lg border bg-card p-6 text-center shadow-sm hover:shadow-md transition-shadow">
                 <h3 className="mb-2 text-lg font-semibold">Drug Testing</h3>
                 <p className="text-sm text-muted-foreground">

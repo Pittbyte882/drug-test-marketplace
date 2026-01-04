@@ -84,11 +84,10 @@ export async function GET(request: Request) {
       .in("company_id", uniqueCompanyIds)
       .eq("is_active", true)
 
-    // NEW: Filter by test type if provided
-    if (testType) {
-      testsQuery = testsQuery.ilike("test_type", `%${testType}%`)
-    }
-
+    // Filter by test category if provided
+      if (testType) {
+          testsQuery = testsQuery.eq("test_category", testType)
+        }
     const { data: tests, error: testsError } = await testsQuery
 
     if (testsError) {
