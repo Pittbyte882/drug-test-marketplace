@@ -219,7 +219,7 @@ export function SearchResults() {
           }
         </h2>
         <p className="text-muted-foreground">
-          Please enter a city, state, or zip code to find testing locations near you.
+          Please enter zip code to find testing locations near you.
         </p>
       </Card>
     </div>
@@ -249,7 +249,7 @@ export function SearchResults() {
             <Card className="p-8 text-center">
               <h3 className="text-xl font-semibold text-primary mb-2">No locations found</h3>
               <p className="text-muted-foreground mb-4">
-                No testing locations found for "{getSearchLocation()}". Try searching with a different city, state, or zip code.
+                No testing locations found for "{getSearchLocation()}". Try searching with a different zip code.
               </p>
               <Button onClick={() => window.history.back()}>
                 Go Back

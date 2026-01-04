@@ -1,13 +1,56 @@
 import { NextResponse } from "next/server"
 import { supabase } from "@/lib/supabase"
 
+// Haversine formula to calculate distance between two points
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 3959 // Earth's radius in miles
+  const dLat = toRad(lat2 - lat1)
+  const dLon = toRad(lon2 - lon1)
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2)
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+  return R * c
+}
+
+function toRad(degrees: number): number {
+  return degrees * (Math.PI / 180)
+}
+
+// Geocode a search query
+async function geocodeQuery(query: string): Promise<{ lat: number; lng: number } | null> {
+  try {
+    const encodedQuery = encodeURIComponent(query + ', USA')
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encodedQuery}&format=json&limit=1`,
+      {
+        headers: {
+          'User-Agent': 'TalcadaMarketplace/1.0'
+        }
+      }
+    )
+    const data = await response.json()
+    
+    if (data && data.length > 0) {
+      return {
+        lat: parseFloat(data[0].lat),
+        lng: parseFloat(data[0].lon)
+      }
+    }
+    return null
+  } catch (error) {
+    console.error('Geocoding error:', error)
+    return null
+  }
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     let city = searchParams.get("city") || ""
     let state = searchParams.get("state") || ""
     const zipCode = searchParams.get("zip_code") || ""
-    const testType = searchParams.get("test_type") || "" // NEW
+    const testType = searchParams.get("test_type") || ""
 
     // Handle "City, State" format
     if (city && city.includes(",")) {
@@ -42,35 +85,54 @@ export async function GET(request: Request) {
 
     console.log("Searching with:", { city, state, zipCode, testType })
 
-    // Build the query
-    let query = supabase
+    // Geocode the search query
+    const searchQuery = zipCode || `${city}${state ? ', ' + state : ''}`
+    const searchCoords = await geocodeQuery(searchQuery)
+
+    if (!searchCoords) {
+      return NextResponse.json({
+        success: false,
+        error: "Could not find location"
+      }, { status: 404 })
+    }
+
+    console.log("Search coordinates:", searchCoords)
+
+    // Get ALL active locations with coordinates
+    const { data: locations, error: locationsError } = await supabase
       .from("locations")
       .select(`
         *,
         companies (*)
       `)
       .eq("is_active", true)
-
-    // Add location filters
-    if (city) {
-      query = query.ilike("city", city)
-    }
-    if (state) {
-      query = query.ilike("state", state)
-    }
-    if (zipCode) {
-      query = query.eq("zip_code", zipCode)
-    }
-
-    const { data: locations, error: locationsError } = await query
+      .not("latitude", "is", null)
+      .not("longitude", "is", null)
 
     if (locationsError) {
       console.error("Supabase error:", locationsError)
       throw locationsError
     }
 
+    // Filter locations within 60 miles
+    const RADIUS_MILES = 60
+    const nearbyLocations = (locations || [])
+      .map(location => ({
+        ...location,
+        distance: calculateDistance(
+          searchCoords.lat,
+          searchCoords.lng,
+          location.latitude!,
+          location.longitude!
+        )
+      }))
+      .filter(location => location.distance <= RADIUS_MILES)
+      .sort((a, b) => a.distance - b.distance) // Sort by closest first
+
+    console.log(`Found ${nearbyLocations.length} locations within ${RADIUS_MILES} miles`)
+
     // Filter out locations without active companies
-    const validLocations = (locations || []).filter(
+    const validLocations = nearbyLocations.filter(
       (location) => location.companies?.is_active
     )
 
@@ -84,10 +146,11 @@ export async function GET(request: Request) {
       .in("company_id", uniqueCompanyIds)
       .eq("is_active", true)
 
-    // Filter by test category if provided
-      if (testType) {
-          testsQuery = testsQuery.eq("test_category", testType)
-        }
+    // Filter by test type if provided
+    if (testType) {
+      testsQuery = testsQuery.eq("test_category", testType)
+    }
+
     const { data: tests, error: testsError } = await testsQuery
 
     if (testsError) {
@@ -101,7 +164,7 @@ export async function GET(request: Request) {
       tests: (tests || []).filter(test => test.company_id === location.company_id)
     }))
 
-    // NEW: Filter out locations with no matching tests if test_type is specified
+    // Filter out locations with no matching tests if test_type is specified
     const filteredLocations = testType 
       ? locationsWithTests.filter(loc => loc.tests.length > 0)
       : locationsWithTests
