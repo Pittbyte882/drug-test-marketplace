@@ -219,7 +219,7 @@ export function SearchResults() {
           }
         </h2>
         <p className="text-muted-foreground">
-          Please enter zip code to find testing locations near you.
+          Please enter city, state, orzip code to find testing locations near you.
         </p>
       </Card>
     </div>
