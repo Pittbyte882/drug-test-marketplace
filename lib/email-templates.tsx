@@ -1,3 +1,22 @@
+// Format phone number to (XXX) XXX-XXXX
+function formatPhoneNumber(phone: string | undefined): string {
+  if (!phone) return "Contact for details"
+  
+  // Remove all non-numeric characters
+  const cleaned = phone.replace(/\D/g, '')
+  
+  // Format based on length
+  if (cleaned.length === 10) {
+    return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`
+  } else if (cleaned.length === 11 && cleaned[0] === '1') {
+    // Handle numbers starting with 1
+    return `(${cleaned.slice(1, 4)}) ${cleaned.slice(4, 7)}-${cleaned.slice(7)}`
+  }
+  
+  // If format is unexpected, return as-is
+  return phone
+}
+
 interface OrderEmailProps {
   orderId: string
   orderNumber: string
@@ -55,7 +74,7 @@ export function generateOrderConfirmationEmail({
           ${item.location.city}, ${item.location.state} ${item.location.zip_code}
         </p>
         <p style="margin: 4px 0; color: #4b5563; font-size: 14px;">
-          <strong>Phone:</strong> ${item.location.phone || item.company.phone || "Contact for details"}
+          <strong>Phone:</strong> ${formatPhoneNumber(item.location.phone || item.company.phone)}
         </p>
         ${item.company.email ? `<p style="margin: 4px 0; color: #4b5563; font-size: 14px;">
           <strong>Email:</strong> ${item.company.email}
@@ -144,7 +163,7 @@ export function generateOrderConfirmationEmail({
               
               <div style="margin-top: 24px; padding: 16px; background: #dbeafe; border-radius: 8px; border-left: 4px solid #0ea5e9;">
                 <p style="margin: 0; color: #075985; font-size: 14px;">
-                  <strong>Need Help?</strong> Contact us at <a href="tel:(800) 460-8598" style="color: #0ea5e9; text-decoration: none;">(800) 460-8598</a> or email <a href="mailto:support@talcada.com" style="color: #0ea5e9; text-decoration: none;">support@talcada.com</a>
+                  <strong>Need Help?</strong> Contact us at <a href="tel:8004608598" style="color: #0ea5e9; text-decoration: none;">(800) 460-8598</a> or email <a href="mailto:support@talcada.com" style="color: #0ea5e9; text-decoration: none;">support@talcada.com</a>
                 </p>
               </div>
             </td>
