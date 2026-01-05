@@ -18,7 +18,7 @@ export async function GET() {
           company: {
             id: '1',
             name: 'ABC Lab',
-            phone: '555-1234',
+            phone: '951-555-1234',
             email: 'contact@abclab.com',
             logo_url: undefined,
           },
@@ -29,7 +29,7 @@ export async function GET() {
             city: 'Temecula',
             state: 'CA',
             zip_code: '92590',
-            phone: '555-1234',
+            phone: '951555-1234',
           },
           test: {
             id: '1',
