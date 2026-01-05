@@ -48,7 +48,7 @@ export async function GET() {
 
     const { data, error } = await resend.emails.send({
   from: EMAIL_CONFIG.from,
-  to: 'admin@boxaloo.com', // Changed from admin@talcada.com
+  to: 'orders@talcada.com', // Changed from admin@talcada.com
   subject: `TEST Order Confirmation #${testOrderData.orderNumber}`,
   html: emailHtml,
 })
@@ -65,7 +65,7 @@ export async function GET() {
 
     return NextResponse.json({
   success: true,
-  message: 'Test email sent to admin@boxaloo.com', // Updated message
+  message: 'Test email sent to orders@talcada.com', // Updated message
   emailId: data?.id,
 })
   } catch (error: any) {
