@@ -144,7 +144,7 @@ export function generateOrderConfirmationEmail({
               
               <div style="margin-top: 24px; padding: 16px; background: #dbeafe; border-radius: 8px; border-left: 4px solid #0ea5e9;">
                 <p style="margin: 0; color: #075985; font-size: 14px;">
-                  <strong>Need Help?</strong> Contact us at <a href="tel:8334611709" style="color: #0ea5e9; text-decoration: none;">(833) 461-1709</a> or email <a href="mailto:support@talcada.com" style="color: #0ea5e9; text-decoration: none;">support@talcada.com</a>
+                  <strong>Need Help?</strong> Contact us at <a href="tel:(800) 460-8598" style="color: #0ea5e9; text-decoration: none;">(800) 460-8598</a> or email <a href="mailto:support@talcada.com" style="color: #0ea5e9; text-decoration: none;">support@talcada.com</a>
                 </p>
               </div>
             </td>
