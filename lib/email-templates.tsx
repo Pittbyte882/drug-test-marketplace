@@ -1,19 +1,21 @@
-// Format phone number to (XXX) XXX-XXXX
-function formatPhoneNumber(phone: string | undefined): string {
+// Helper function to format phone numbers
+function formatPhoneNumber(phone?: string): string {
   if (!phone) return "Contact for details"
   
   // Remove all non-numeric characters
   const cleaned = phone.replace(/\D/g, '')
   
-  // Format based on length
+  // Format as (###) ###-####
   if (cleaned.length === 10) {
     return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`
-  } else if (cleaned.length === 11 && cleaned[0] === '1') {
-    // Handle numbers starting with 1
+  }
+  
+  // If 11 digits (with country code 1), remove the 1
+  if (cleaned.length === 11 && cleaned[0] === '1') {
     return `(${cleaned.slice(1, 4)}) ${cleaned.slice(4, 7)}-${cleaned.slice(7)}`
   }
   
-  // If format is unexpected, return as-is
+  // Return as-is if format is unexpected
   return phone
 }
 
