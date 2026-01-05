@@ -47,11 +47,11 @@ export async function GET() {
     const emailHtml = generateOrderConfirmationEmail(testOrderData)
 
     const { data, error } = await resend.emails.send({
-      from: EMAIL_CONFIG.from,
-      to: 'admin@talcada.com', // Your email
-      subject: `TEST Order Confirmation #${testOrderData.orderNumber}`,
-      html: emailHtml,
-    })
+  from: EMAIL_CONFIG.from,
+  to: 'admin@boxaloo.com', // Changed from admin@talcada.com
+  subject: `TEST Order Confirmation #${testOrderData.orderNumber}`,
+  html: emailHtml,
+})
 
     if (error) {
       console.error('Email error:', error)
@@ -64,10 +64,10 @@ export async function GET() {
     console.log('Email sent successfully:', data)
 
     return NextResponse.json({
-      success: true,
-      message: 'Test email sent to admin@talcada.com',
-      emailId: data?.id,
-    })
+  success: true,
+  message: 'Test email sent to admin@boxaloo.com', // Updated message
+  emailId: data?.id,
+})
   } catch (error: any) {
     console.error('Test email exception:', error)
     return NextResponse.json({
