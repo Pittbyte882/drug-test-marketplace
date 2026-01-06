@@ -1,73 +1,93 @@
 import { NextResponse } from 'next/server'
-import { resend, EMAIL_CONFIG } from '@/lib/email-service'
-import { generateOrderConfirmationEmail } from '@/lib/email-templates'
+import { 
+  sendOrderConfirmationEmail, 
+  sendAdminNotificationEmail,
+  sendProviderNotificationEmail 
+} from '@/lib/email-service'
 
 export async function GET() {
   try {
-    console.log('Testing email with:', {
-      fromEmail: EMAIL_CONFIG.from,
-      apiKey: process.env.RESEND_API_KEY ? 'Set' : 'Missing',
-    })
+    console.log('Testing all email notifications...')
 
     const testOrderData = {
       orderId: 'test-' + Date.now(),
       orderNumber: 'TEST-' + Math.floor(Math.random() * 1000),
       customerName: 'Test Customer',
-      items: [
-        {
-          company: {
-            id: '1',
-            name: 'ABC Lab',
-            phone: '9515551234',
-            email: 'contact@abclab.com',
-            logo_url: undefined,
-          },
-          location: {
-            id: '1',
-            name: 'ABC Lab Temecula',
-            address: '41743 Enterprise Circle N',
-            city: 'Temecula',
-            state: 'CA',
-            zip_code: '92590',
-            phone: '9515551234',
-          },
-          test: {
-            id: '1',
-            name: '5 Panel Drug Test',
-            description: 'Standard 5 panel drug screening',
-            price: 79.99,
-            turnaround_time: '24-48 hours',
-          },
-          quantity: 1,
+      customerEmail: 'orders@talcada.com', // All test emails go here
+      customerPhone: '(951) 555-1234',
+    }
+
+    const testItems = [
+      {
+        company: {
+          id: '1',
+          name: 'ABC Lab',
+          phone: '9515551234',
+          email: 'orders@talcada.com', // Provider email test
+          logo_url: undefined,
         },
-      ],
-      total: 79.99,
-    }
+        location: {
+          id: '1',
+          name: 'ABC Lab Temecula',
+          address: '41743 Enterprise Circle N',
+          city: 'Temecula',
+          state: 'CA',
+          zip_code: '92590',
+          phone: '9515551234',
+        },
+        test: {
+          id: '1',
+          name: '5 Panel Drug Test',
+          description: 'Standard 5 panel drug screening',
+          price: 79.99,
+          turnaround_time: '24-48 hours',
+        },
+        quantity: 1,
+      },
+    ]
 
-    const emailHtml = generateOrderConfirmationEmail(testOrderData)
+    const total = 79.99
 
-    const { data, error } = await resend.emails.send({
-  from: EMAIL_CONFIG.from,
-  to: 'orders@talcada.com', // Changed from admin@talcada.com
-  subject: `TEST Order Confirmation #${testOrderData.orderNumber}`,
-  html: emailHtml,
-})
+    console.log('1. Sending customer confirmation email...')
+    const customerResult = await sendOrderConfirmationEmail({
+      ...testOrderData,
+      items: testItems,
+      total,
+    })
+    console.log('Customer email result:', customerResult.success ? '✅' : '❌')
 
-    if (error) {
-      console.error('Email error:', error)
-      return NextResponse.json({
-        success: false,
-        error: error,
-      }, { status: 500 })
-    }
+    console.log('2. Sending admin notification email...')
+    const adminResult = await sendAdminNotificationEmail({
+      ...testOrderData,
+      items: testItems,
+      total,
+    })
+    console.log('Admin email result:', adminResult.success ? '✅' : '❌')
 
-    console.log('Email sent successfully:', data)
+    console.log('3. Sending provider notification email...')
+    const providerResult = await sendProviderNotificationEmail({
+      ...testOrderData,
+      providerEmail: 'orders@talcada.com', // Provider test email
+      providerName: 'ABC Lab',
+      locationName: 'ABC Lab Temecula',
+      items: testItems.map(item => ({
+        test: item.test,
+        quantity: item.quantity,
+      })),
+      total,
+    })
+    console.log('Provider email result:', providerResult.success ? '✅' : '❌')
 
     return NextResponse.json({
-  success: true,
-  message: 'Test email sent to orders@talcada.com', // Updated message
-  emailId: data?.id,
-})
+      success: true,
+      message: 'All test emails sent to orders@talcada.com! Check your inbox.',
+      orderNumber: testOrderData.orderNumber,
+      results: {
+        customer: customerResult.success ? '✅ Sent' : '❌ Failed',
+        admin: adminResult.success ? '✅ Sent' : '❌ Failed',
+        provider: providerResult.success ? '✅ Sent' : '❌ Failed',
+      },
+    })
   } catch (error: any) {
     console.error('Test email exception:', error)
     return NextResponse.json({
