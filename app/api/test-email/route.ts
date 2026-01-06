@@ -60,7 +60,7 @@ export async function GET() {
     console.log('Customer email result:', customerResult.success ? '✅' : '❌')
 
     // Wait 1 second before next email
-    await wait(1000)
+    await wait(1500)
 
     console.log('2. Sending admin notification email...')
     const adminResult = await sendAdminNotificationEmail({
@@ -71,7 +71,7 @@ export async function GET() {
     console.log('Admin email result:', adminResult.success ? '✅' : '❌')
 
     // Wait 1 second before next email
-    await wait(1000)
+    await wait(1500)
 
     console.log('3. Sending provider notification email...')
     const providerResult = await sendProviderNotificationEmail({
