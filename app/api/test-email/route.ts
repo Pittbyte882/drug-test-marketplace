@@ -5,6 +5,9 @@ import {
   sendProviderNotificationEmail 
 } from '@/lib/email-service'
 
+// Helper function to wait
+const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+
 export async function GET() {
   try {
     console.log('Testing all email notifications...')
@@ -13,7 +16,7 @@ export async function GET() {
       orderId: 'test-' + Date.now(),
       orderNumber: 'TEST-' + Math.floor(Math.random() * 1000),
       customerName: 'Test Customer',
-      customerEmail: 'orders@talcada.com', // All test emails go here
+      customerEmail: 'orders@talcada.com',
       customerPhone: '(951) 555-1234',
     }
 
@@ -23,7 +26,7 @@ export async function GET() {
           id: '1',
           name: 'ABC Lab',
           phone: '9515551234',
-          email: 'orders@talcada.com', // Provider email test
+          email: 'orders@talcada.com',
           logo_url: undefined,
         },
         location: {
@@ -56,6 +59,9 @@ export async function GET() {
     })
     console.log('Customer email result:', customerResult.success ? '✅' : '❌')
 
+    // Wait 1 second before next email
+    await wait(1000)
+
     console.log('2. Sending admin notification email...')
     const adminResult = await sendAdminNotificationEmail({
       ...testOrderData,
@@ -64,10 +70,13 @@ export async function GET() {
     })
     console.log('Admin email result:', adminResult.success ? '✅' : '❌')
 
+    // Wait 1 second before next email
+    await wait(1000)
+
     console.log('3. Sending provider notification email...')
     const providerResult = await sendProviderNotificationEmail({
       ...testOrderData,
-      providerEmail: 'orders@talcada.com', // Provider test email
+      providerEmail: 'orders@talcada.com',
       providerName: 'ABC Lab',
       locationName: 'ABC Lab Temecula',
       items: testItems.map(item => ({
