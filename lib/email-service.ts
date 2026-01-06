@@ -104,21 +104,20 @@ export async function sendProviderNotificationEmail(orderData: {
   total: number
 }) {
   const itemsHtml = orderData.items
-    .map(
-      (item) => `
-    <div style="background: #f9fafb; padding: 16px; margin: 12px 0; border-radius: 8px; border-left: 4px solid #10b981;">
-      <p style="margin: 0 0 8px 0; font-size: 16px; font-weight: bold; color: #111827;">
-        ${item.test.name}
-      </p>
-      ${item.test.description ? `<p style="margin: 0 0 8px 0; color: #6b7280; font-size: 14px;">${item.test.description}</p>` : ''}
-      <p style="margin: 0; color: #4b5563; font-size: 14px;">
-        <strong>Quantity:</strong> ${item.quantity} | 
-        <strong>Price:</strong> $${(item.test.price * item.quantity).toFixed(2)}
-      </p>
-    </div>
-  `
-    )
-    .join('')
+  .map(
+    (item) => `
+  <div style="background: #f9fafb; padding: 16px; margin: 12px 0; border-radius: 8px; border-left: 4px solid #10b981;">
+    <p style="margin: 0 0 8px 0; font-size: 16px; font-weight: bold; color: #111827;">
+      ${item.test.name}
+    </p>
+    ${item.test.description ? `<p style="margin: 0 0 8px 0; color: #6b7280; font-size: 14px;">${item.test.description}</p>` : ''}
+    <p style="margin: 0; color: #4b5563; font-size: 14px;">
+      <strong>Quantity:</strong> ${item.quantity}
+    </p>
+  </div>
+`
+  )
+  .join('')
 
   const providerHtml = `
 <!DOCTYPE html>
@@ -181,19 +180,8 @@ export async function sendProviderNotificationEmail(orderData: {
               <h3 style="margin: 24px 0 16px 0; color: #111827; font-size: 20px;">Test Order Details</h3>
               ${itemsHtml}
               
-              <!-- Total -->
-              <div style="margin-top: 24px; padding-top: 16px; border-top: 2px solid #e5e7eb;">
-                <table width="100%" cellpadding="0" cellspacing="0">
-                  <tr>
-                    <td style="text-align: right; padding: 8px 0;">
-                      <span style="color: #6b7280; font-size: 16px;">Total Amount:</span>
-                    </td>
-                    <td style="text-align: right; padding: 8px 0; width: 120px;">
-                      <strong style="color: #111827; font-size: 20px;">$${orderData.total.toFixed(2)}</strong>
-                    </td>
-                  </tr>
-                </table>
-              </div>
+              <!-- Divider -->
+              <div style="margin-top: 24px; padding-top: 16px; border-top: 2px solid #e5e7eb;"></div>
               
               <!-- Next Steps -->
               <div style="margin-top: 32px; padding: 20px; background: #fef3c7; border-radius: 8px; border-left: 4px solid #f59e0b;">
