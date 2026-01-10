@@ -83,7 +83,7 @@ export function SiteHeader() {
         </div>
       </div>
 
-      <div className="container flex h-16 items-center justify-between">
+    <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center space-x-2">
             <img 
@@ -93,35 +93,7 @@ export function SiteHeader() {
             />
           </Link>
 
-          <nav className="hidden lg:flex items-center gap-6">
-  <a href="https://www.talcada.com/drug-information/" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
-    Drug
-  </a>
-  <a href="https://www.talcada.com/alcohol-education-awareness/" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
-    Alcohol
-  </a>
-  <a href="https://www.talcada.com/addiction-recovery-resources-support/" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
-    Recovery
-  </a>
-  <a href="https://www.talcada.com/drug-alcohol-testing-information/" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
-    Testing
-  </a>
-  <a href="https://www.talcada.com/dna-testing-genetic-information/" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
-    Blood
-  </a>
-  <a href="https://www.talcada.com/dna-information/" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
-    DNA
-  </a>
-  <a href="https://www.talcada.com/employer-drug-testing-compliance-resources/" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
-    Employers
-  </a>
-  <Link href="https://tests.talcada.com" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
-    Order Test
-  </Link>
-  <a href="https://www.talcada.com/contact/" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
-    Contact Us
-  </a>
-</nav>
+          
         </div>
 
         <div className="flex items-center gap-4">
