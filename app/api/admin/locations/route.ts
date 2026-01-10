@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { supabase } from "@/lib/supabase"
+import { geocodeAddress } from "@/lib/geocoding"
 
 // GET all locations or by company_id
 export async function GET(request: Request) {
@@ -39,6 +40,28 @@ export async function POST(request: Request) {
   try {
     const data = await request.json()
 
+    // Auto-geocode the address if coordinates not provided
+    let latitude = data.latitude
+    let longitude = data.longitude
+
+    if (!latitude || !longitude) {
+      console.log('Geocoding new location...')
+      const coords = await geocodeAddress(
+        data.address,
+        data.city,
+        data.state,
+        data.zip_code
+      )
+      
+      if (coords) {
+        latitude = coords.lat
+        longitude = coords.lng
+        console.log('✓ Auto-geocoded location')
+      } else {
+        console.log('⚠ Could not geocode location, saving without coordinates')
+      }
+    }
+
     const { data: location, error } = await supabase
       .from('locations')
       .insert({
@@ -49,8 +72,8 @@ export async function POST(request: Request) {
         state: data.state,
         zip_code: data.zip_code,
         phone: data.phone,
-        latitude: data.latitude,
-        longitude: data.longitude,
+        latitude: latitude,
+        longitude: longitude,
         is_active: data.is_active ?? true,
       })
       .select()
@@ -72,6 +95,33 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const { id, ...updateData } = await request.json()
+
+    // If address changed and no coordinates provided, re-geocode
+    if ((updateData.address || updateData.city || updateData.state || updateData.zip_code) && 
+        (!updateData.latitude || !updateData.longitude)) {
+      
+      // Get current location data to fill in missing address parts
+      const { data: currentLocation } = await supabase
+        .from('locations')
+        .select('address, city, state, zip_code')
+        .eq('id', id)
+        .single()
+
+      if (currentLocation) {
+        const coords = await geocodeAddress(
+          updateData.address || currentLocation.address,
+          updateData.city || currentLocation.city,
+          updateData.state || currentLocation.state,
+          updateData.zip_code || currentLocation.zip_code
+        )
+        
+        if (coords) {
+          updateData.latitude = coords.lat
+          updateData.longitude = coords.lng
+          console.log('✓ Re-geocoded updated location')
+        }
+      }
+    }
 
     const { data: location, error } = await supabase
       .from('locations')
