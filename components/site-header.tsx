@@ -69,35 +69,31 @@ export function SiteHeader() {
   const cartCount = items.reduce((sum, item) => sum + item.quantity, 0)
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-white">
-      <div className="border-b bg-muted/30">
-  <div className="container flex h-auto md:h-10 items-center justify-end gap-2 md:gap-4 text-sm py-2 md:py-0">
-    {/* Hide "Talcada Customer Service" text on mobile */}
-    <span className="hidden lg:inline text-muted-foreground">Talcada Customer Service</span>
-    
-    {/* Phone number - smaller on mobile */}
-    <a 
-      href="tel:8004608598" 
-      className="flex items-center gap-1 font-semibold text-foreground hover:text-primary text-xs md:text-sm"
-    >
-      <Phone className="h-3 w-3 md:h-4 md:w-4" />
-      <span className="whitespace-nowrap">(800) 460-8598</span>
-    </a>
-    
-    {/* Button - compact on mobile */}
-    <Button 
-  asChild 
-  size="sm" 
-  className="bg-primary text-primary-foreground hover:bg-primary/90 text-xs md:text-sm px-3 md:px-4"
->
-  <Link href="/search">
-    <span className="hidden md:inline">Order A Test Near You</span>
-    <span className="md:hidden">Order</span>
-  </Link>
-</Button>
-  </div>
-</div>
+    <header className="md:sticky top-0 z-50 w-full border-b bg-white">
+      {/* Top bar - hidden on mobile */}
+      <div className="hidden md:block border-b bg-muted/30">
+        <div className="container flex h-10 items-center justify-end gap-4 text-sm">
+          <span className="text-muted-foreground">Talcada Customer Service</span>
+          
+          <a 
+            href="tel:8004608598" 
+            className="flex items-center gap-1 font-semibold text-foreground hover:text-primary"
+          >
+            <Phone className="h-4 w-4" />
+            (800) 460-8598
+          </a>
+          
+          <Button 
+            asChild 
+            size="sm" 
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
+          >
+            <Link href="/search">Order A Test Near You</Link>
+          </Button>
+        </div>
+      </div>
 
+      {/* Main header - always visible */}
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center space-x-2">
@@ -110,6 +106,14 @@ export function SiteHeader() {
         </div>
 
         <div className="flex items-center gap-4">
+          {/* Phone icon only on mobile */}
+          <a 
+            href="tel:8004608598" 
+            className="md:hidden"
+          >
+            <Phone className="h-5 w-5 text-primary" />
+          </a>
+          
           <Link href="/cart">
             <Button variant="ghost" size="icon" className="relative">
               <ShoppingCart className="h-5 w-5" />
