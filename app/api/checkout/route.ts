@@ -1,45 +1,45 @@
 import { NextResponse } from "next/server"
-import { createOrder } from "@/lib/db"
+import Stripe from "stripe"
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: "2024-11-20.acacia",
+})
 
 export async function POST(request: Request) {
   try {
-    const { customer, items, total, stripePaymentIntentId } = await request.json()
+    const { items, customer } = await request.json()
 
-    const order = await createOrder({
-      customer_name: customer.name,
-      customer_email: customer.email,
-      customer_phone: customer.phone,
-      total_amount: total,
-      payment_status: "completed",
-      stripe_payment_intent_id: stripePaymentIntentId,
-      items: items.map((item: any) => ({
-        test_id: item.test.id,
-        location_id: item.location.id,
-        company_id: item.company.id,
+    // Create Stripe checkout session
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      line_items: items.map((item: any) => ({
+        price_data: {
+          currency: "usd",
+          product_data: {
+            name: item.test.name,
+            description: `${item.location.name} - ${item.location.city}, ${item.location.state}`,
+          },
+          unit_amount: Math.round(item.test.price * 100),
+        },
         quantity: item.quantity,
-        price: item.test.price,
       })),
+      mode: "payment",
+      success_url: `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/confirmation?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/cart`,
+      customer_email: customer.email,
+      metadata: {
+        customer_name: customer.name,
+        customer_email: customer.email,
+        customer_phone: customer.phone,
+      },
     })
 
-    // Send confirmation email
-    await fetch(`${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/send-email`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        orderId: order.id,
-        orderNumber: order.order_number,
-        customer,
-        items,
-      }),
-    })
-
-    return NextResponse.json({
-      success: true,
-      orderId: order.id,
-      orderNumber: order.order_number,
-    })
+    return NextResponse.json({ sessionId: session.id })
   } catch (error: any) {
     console.error("Checkout error:", error)
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 })
+    return NextResponse.json(
+      { error: error.message },
+      { status: 500 }
+    )
   }
 }
