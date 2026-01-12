@@ -84,14 +84,17 @@ export function SiteHeader() {
       <span className="whitespace-nowrap">(800) 460-8598</span>
     </a>
     
-    {/* Button - full width on mobile */}
+    {/* Button - compact on mobile */}
     <Button 
-      asChild 
-      size="sm" 
-      className="bg-primary text-primary-foreground hover:bg-primary/90 text-xs md:text-sm px-3 md:px-4 whitespace-nowrap"
-    >
-      <Link href="/search">Order A Test</Link>
-    </Button>
+  asChild 
+  size="sm" 
+  className="bg-primary text-primary-foreground hover:bg-primary/90 text-xs md:text-sm px-3 md:px-4"
+>
+  <Link href="/search">
+    <span className="hidden md:inline">Order A Test Near You</span>
+    <span className="md:hidden">Order</span>
+  </Link>
+</Button>
   </div>
 </div>
 
