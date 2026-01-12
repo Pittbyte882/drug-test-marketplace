@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card } from "@/components/ui/card"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { loadStripe } from "@stripe/stripe-js"
 import { getCurrentUser, signUp } from "@/lib/auth"
 import Link from "next/link"
@@ -18,10 +19,13 @@ export function CheckoutForm() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [currentUser, setCurrentUser] = useState<any>(null)
+  const [accountType, setAccountType] = useState<"individual" | "company">("individual")
   const [createAccount, setCreateAccount] = useState(false)
   
   const [formData, setFormData] = useState({
-    name: "",
+    fullName: "",
+    companyName: "",
+    contactPerson: "",
     email: "",
     phone: "",
     password: "",
@@ -59,8 +63,10 @@ export function CheckoutForm() {
         const result = await signUp({
           email: formData.email,
           password: formData.password,
-          accountType: 'individual',
-          fullName: formData.name,
+          accountType: accountType,
+          fullName: accountType === 'individual' ? formData.fullName : formData.contactPerson,
+          companyName: accountType === 'company' ? formData.companyName : undefined,
+          contactPerson: accountType === 'company' ? formData.contactPerson : undefined,
           phone: formData.phone,
         })
 
@@ -71,17 +77,26 @@ export function CheckoutForm() {
         }
       }
 
+      // Prepare customer data based on account type
+      const customerData = accountType === 'individual' 
+        ? {
+            name: formData.fullName,
+            email: formData.email,
+            phone: formData.phone,
+          }
+        : {
+            name: `${formData.companyName} (${formData.contactPerson})`,
+            email: formData.email,
+            phone: formData.phone,
+          }
+
       // Create Stripe checkout session
       const response = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           items,
-          customer: {
-            name: formData.name,
-            email: formData.email,
-            phone: formData.phone,
-          },
+          customer: customerData,
         }),
       })
 
@@ -138,21 +153,79 @@ export function CheckoutForm() {
         </Card>
       )}
 
+      {/* Account Type Selection */}
+      {!currentUser && (
+        <Card className="p-6">
+          <h2 className="text-xl font-semibold mb-4">Account Type</h2>
+          <RadioGroup value={accountType} onValueChange={(value: any) => setAccountType(value)}>
+            <div className="flex items-center space-x-2 p-3 border rounded-lg cursor-pointer hover:bg-muted/50">
+              <RadioGroupItem value="individual" id="individual" />
+              <Label htmlFor="individual" className="font-normal cursor-pointer flex-1">
+                <div>
+                  <p className="font-semibold">Individual</p>
+                  <p className="text-xs text-muted-foreground">For personal testing</p>
+                </div>
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2 p-3 border rounded-lg cursor-pointer hover:bg-muted/50">
+              <RadioGroupItem value="company" id="company" />
+              <Label htmlFor="company" className="font-normal cursor-pointer flex-1">
+                <div>
+                  <p className="font-semibold">Company</p>
+                  <p className="text-xs text-muted-foreground">For business or employee testing</p>
+                </div>
+              </Label>
+            </div>
+          </RadioGroup>
+        </Card>
+      )}
+
       {/* Customer Information */}
       <Card className="p-6">
-        <h2 className="text-xl font-semibold mb-4">Customer Information</h2>
+        <h2 className="text-xl font-semibold mb-4">
+          {accountType === 'individual' ? 'Your Information' : 'Company Information'}
+        </h2>
         
         <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Full Name</Label>
-            <Input
-              id="name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              required
-            />
-          </div>
+          {/* Individual Fields */}
+          {accountType === 'individual' && (
+            <div className="space-y-2">
+              <Label htmlFor="fullName">Full Name</Label>
+              <Input
+                id="fullName"
+                value={formData.fullName}
+                onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                required
+              />
+            </div>
+          )}
 
+          {/* Company Fields */}
+          {accountType === 'company' && (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="companyName">Company Name</Label>
+                <Input
+                  id="companyName"
+                  value={formData.companyName}
+                  onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="contactPerson">Contact Person</Label>
+                <Input
+                  id="contactPerson"
+                  value={formData.contactPerson}
+                  onChange={(e) => setFormData({ ...formData, contactPerson: e.target.value })}
+                  required
+                />
+              </div>
+            </>
+          )}
+
+          {/* Common Fields */}
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
