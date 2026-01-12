@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server"
 import Stripe from "stripe"
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  
-})
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 
 export async function POST(request: Request) {
   try {
@@ -34,7 +32,10 @@ export async function POST(request: Request) {
       },
     })
 
-    return NextResponse.json({ sessionId: session.id })
+    return NextResponse.json({ 
+      sessionId: session.id,
+      url: session.url 
+    })
   } catch (error: any) {
     console.error("Checkout error:", error)
     return NextResponse.json(
