@@ -92,18 +92,10 @@ export function CheckoutForm() {
       }
 
       // Redirect to Stripe Checkout
-      const stripe = await stripePromise
-      if (!stripe) {
-        throw new Error("Stripe failed to load")
-      }
-
-      const { error } = await stripe.redirectToCheckout({
-        sessionId: data.sessionId,
-      })
-
-      if (error) {
-        console.error("Stripe redirect error:", error)
-        alert("Payment failed: " + error.message)
+      if (data.url) {
+        window.location.href = data.url
+      } else {
+        throw new Error("No checkout URL received")
       }
     } catch (error: any) {
       console.error("Checkout error:", error)
