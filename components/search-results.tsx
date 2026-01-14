@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { MapPin, Phone, Clock, ShoppingCart, Search } from "lucide-react"
+import { MapPin, Phone, Clock, ShoppingCart, Search, ChevronDown, ChevronUp } from "lucide-react"
 import { useCart } from "@/lib/cart-context"
 import { useToast } from "@/hooks/use-toast"
 
@@ -57,6 +57,7 @@ export function SearchResults() {
   
   const [results, setResults] = useState<SearchResult[]>([])
   const [loading, setLoading] = useState(true)
+  const [expandedLocations, setExpandedLocations] = useState<Set<string>>(new Set())
   const { addItem } = useCart()
   const { toast } = useToast()
 
@@ -74,6 +75,10 @@ export function SearchResults() {
 
         if (data.success) {
           setResults(data.data)
+          // Auto-expand first location
+          if (data.data.length > 0) {
+            setExpandedLocations(new Set([data.data[0].id]))
+          }
         } else {
           throw new Error(data.error)
         }
@@ -96,50 +101,62 @@ export function SearchResults() {
     }
   }, [city, state, zipCode, toast])
 
+  const toggleLocation = (locationId: string) => {
+    setExpandedLocations(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(locationId)) {
+        newSet.delete(locationId)
+      } else {
+        newSet.add(locationId)
+      }
+      return newSet
+    })
+  }
+
   const handleAddToCart = (location: SearchResult, test: Test) => {
-  addItem({
-    company: location.companies,
-    location: {
-      id: location.id,
-      name: location.name,
-      address: location.address,
-      city: location.city,
-      state: location.state,
-      zip_code: location.zip_code,
-      phone: location.phone,
-    },
-    test: test,
-    quantity: 1,
-  })
+    addItem({
+      company: location.companies,
+      location: {
+        id: location.id,
+        name: location.name,
+        address: location.address,
+        city: location.city,
+        state: location.state,
+        zip_code: location.zip_code,
+        phone: location.phone,
+      },
+      test: test,
+      quantity: 1,
+    })
 
-  // Get current search parameters to return to same results
-  const currentParams = new URLSearchParams()
-  if (city) currentParams.append("city", city)
-  if (state) currentParams.append("state", state)
-  if (zipCode) currentParams.append("zip_code", zipCode)
-  const searchUrl = `/search?${currentParams.toString()}`
+    // Get current search parameters to return to same results
+    const currentParams = new URLSearchParams()
+    if (city) currentParams.append("city", city)
+    if (state) currentParams.append("state", state)
+    if (zipCode) currentParams.append("zip_code", zipCode)
+    const searchUrl = `/search?${currentParams.toString()}`
 
-  toast({
-    title: "Added to cart",
-    description: (
-      <div className="flex gap-2 mt-2">
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => window.location.href = searchUrl}
-        >
-          Continue Shopping
-        </Button>
-        <Button
-          size="sm"
-          onClick={() => window.location.href = '/cart'}
-        >
-          View Cart
-        </Button>
-      </div>
-    ),
-  })
-}
+    toast({
+      title: "Added to cart",
+      description: (
+        <div className="flex gap-2 mt-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => window.location.href = searchUrl}
+          >
+            Continue Shopping
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => window.location.href = '/cart'}
+          >
+            View Cart
+          </Button>
+        </div>
+      ),
+    })
+  }
 
   const getSearchLocation = () => {
     if (city && state) return `${city}, ${state}`
@@ -174,74 +191,72 @@ export function SearchResults() {
   }
 
   if (!city && !state && !zipCode) {
+    return (
+      <div className="container py-12">
+        {/* Search Bar */}
+        <div className="mb-8">
+          <form 
+            onSubmit={(e) => {
+              e.preventDefault()
+              const formData = new FormData(e.currentTarget)
+              const searchValue = formData.get('search') as string
+              if (searchValue.trim()) {
+                const params = new URLSearchParams()
+                params.append("city", searchValue.trim())
+                if (searchParams.get("test_type")) {
+                  params.append("test_type", searchParams.get("test_type")!)
+                }
+                window.location.href = `/search?${params.toString()}`
+              }
+            }}
+            className="mx-auto flex max-w-2xl gap-4"
+          >
+            <Input
+              type="text"
+              name="search"
+              placeholder="Enter city, state, or zip code"
+              className="h-14 flex-1 bg-white text-slate-900"
+            />
+            <Button
+              type="submit"
+              size="lg"
+              className="h-14 bg-[#F59E0B] px-8 font-semibold text-slate-900 hover:bg-[#F59E0B]/90"
+            >
+              <Search className="mr-2 h-5 w-5" />
+              SEARCH
+            </Button>
+          </form>
+        </div>
+
+        <Card className="p-8 text-center">
+          <h2 className="text-2xl font-bold text-primary mb-4">
+            {searchParams.get("test_type") 
+              ? `${searchParams.get("test_type")?.charAt(0).toUpperCase()}${searchParams.get("test_type")?.slice(1)} Testing Locations`
+              : "Search for Testing Locations"
+            }
+          </h2>
+          <p className="text-muted-foreground">
+            Please enter city, state, or zip code to find testing locations near you.
+          </p>
+        </Card>
+      </div>
+    )
+  }
+
   return (
     <div className="container py-12">
-      {/* Search Bar */}
       <div className="mb-8">
-        <form 
-          onSubmit={(e) => {
-            e.preventDefault()
-            const formData = new FormData(e.currentTarget)
-            const searchValue = formData.get('search') as string
-            if (searchValue.trim()) {
-              const params = new URLSearchParams()
-              params.append("city", searchValue.trim())
-              if (searchParams.get("test_type")) {
-                params.append("test_type", searchParams.get("test_type")!)
-              }
-              window.location.href = `/search?${params.toString()}`
-            }
-          }}
-          className="mx-auto flex max-w-2xl gap-4"
-        >
-          <Input
-            type="text"
-            name="search"
-            placeholder="Enter city, state, or zip code"
-            className="h-14 flex-1 bg-white text-slate-900"
-          />
-          <Button
-            type="submit"
-            size="lg"
-            className="h-14 bg-[#F59E0B] px-8 font-semibold text-slate-900 hover:bg-[#F59E0B]/90"
-          >
-            <Search className="mr-2 h-5 w-5" />
-            SEARCH
-          </Button>
-        </form>
-      </div>
-
-      <Card className="p-8 text-center">
-        <h2 className="text-2xl font-bold text-primary mb-4">
+        <h1 className="text-3xl font-bold text-primary">
           {searchParams.get("test_type") 
             ? `${searchParams.get("test_type")?.charAt(0).toUpperCase()}${searchParams.get("test_type")?.slice(1)} Testing Locations`
-            : "Search for Testing Locations"
+            : "Testing Locations"
           }
-        </h2>
-        <p className="text-muted-foreground">
-          Please enter city, state, orzip code to find testing locations near you.
+          {(city || state || zipCode) && ` near ${getSearchLocation()}`}
+        </h1>
+        <p className="mt-2 text-muted-foreground">
+          {results.length} {results.length === 1 ? "location" : "locations"} found
         </p>
-      </Card>
-    </div>
-  )
-}
-
-  return (
-  
-  <div className="container py-12">
-    <div className="mb-8">
-      <h1 className="text-3xl font-bold text-primary">
-        {searchParams.get("test_type") 
-          ? `${searchParams.get("test_type")?.charAt(0).toUpperCase()}${searchParams.get("test_type")?.slice(1)} Testing Locations`
-          : "Testing Locations"
-        }
-        {(city || state || zipCode) && ` near ${getSearchLocation()}`}
-      </h1>
-      <p className="mt-2 text-muted-foreground">
-        {results.length} {results.length === 1 ? "location" : "locations"} found
-      </p>
-    </div> 
-   
+      </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
@@ -322,51 +337,69 @@ export function SearchResults() {
                     </div>
                   </div>
 
+                  {/* Accordion for tests */}
                   <div className="p-6">
-                    <h4 className="mb-4 font-semibold text-primary">Available Tests</h4>
-                    {location.tests.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">
-                        No tests currently available at this location.
-                      </p>
-                    ) : (
-                      <div className="space-y-3">
-                        {location.tests.map((test) => (
-                          <div
-                            key={test.id}
-                            className="flex items-center justify-between rounded-lg border border-border/50 bg-card p-4 shadow-sm"
-                          >
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2">
-                                <p className="font-medium text-primary">{test.name}</p>
-                                <Badge variant="secondary" className="text-xs">
-                                  {test.test_type}
-                                </Badge>
-                              </div>
-                              {test.description && (
-                                <p className="mt-1 text-sm text-muted-foreground">{test.description}</p>
-                              )}
-                              {test.turnaround_time && (
-                                <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
-                                  <Clock className="h-3 w-3" />
-                                  <span>Results in {test.turnaround_time}</span>
-                                </div>
-                              )}
-                            </div>
-                            <div className="ml-4 flex items-center gap-4">
-                              <span className="text-lg font-bold text-primary">
-                                ${test.price.toFixed(2)}
-                              </span>
-                              <Button
-                                onClick={() => handleAddToCart(location, test)}
-                                size="sm"
-                                className="bg-primary hover:bg-primary/90"
+                    <button
+                      onClick={() => toggleLocation(location.id)}
+                      className="flex w-full items-center justify-between text-left transition-colors hover:text-primary"
+                    >
+                      <h4 className="font-semibold text-primary">
+                        Available Tests ({location.tests.length})
+                      </h4>
+                      {expandedLocations.has(location.id) ? (
+                        <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                      )}
+                    </button>
+
+                    {expandedLocations.has(location.id) && (
+                      <div className="mt-4">
+                        {location.tests.length === 0 ? (
+                          <p className="text-sm text-muted-foreground">
+                            No tests currently available at this location.
+                          </p>
+                        ) : (
+                          <div className="space-y-3">
+                            {location.tests.map((test) => (
+                              <div
+                                key={test.id}
+                                className="flex items-center justify-between rounded-lg border border-border/50 bg-card p-4 shadow-sm transition-shadow hover:shadow-md"
                               >
-                                <ShoppingCart className="mr-2 h-4 w-4" />
-                                Add to Cart
-                              </Button>
-                            </div>
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2">
+                                    <p className="font-medium text-primary">{test.name}</p>
+                                    <Badge variant="secondary" className="text-xs">
+                                      {test.test_type}
+                                    </Badge>
+                                  </div>
+                                  {test.description && (
+                                    <p className="mt-1 text-sm text-muted-foreground">{test.description}</p>
+                                  )}
+                                  {test.turnaround_time && (
+                                    <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
+                                      <Clock className="h-3 w-3" />
+                                      <span>Results in {test.turnaround_time}</span>
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="ml-4 flex items-center gap-4">
+                                  <span className="text-lg font-bold text-primary">
+                                    ${test.price.toFixed(2)}
+                                  </span>
+                                  <Button
+                                    onClick={() => handleAddToCart(location, test)}
+                                    size="sm"
+                                    className="bg-primary hover:bg-primary/90"
+                                  >
+                                    <ShoppingCart className="mr-2 h-4 w-4" />
+                                    Add to Cart
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
                           </div>
-                        ))}
+                        )}
                       </div>
                     )}
                   </div>
