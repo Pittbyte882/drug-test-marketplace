@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { signUp } from "@/lib/auth"
 import { SiteHeader } from "@/components/site-header"
+import { CartProvider } from "@/lib/cart-context"
 
 export default function SignUpPage() {
   const router = useRouter()
@@ -76,7 +77,7 @@ export default function SignUpPage() {
   }
 
   return (
-    <>
+    <CartProvider>
       <SiteHeader />
       <div className="container flex min-h-[calc(100vh-200px)] items-center justify-center py-12">
         <Card className="w-full max-w-md p-8">
@@ -215,6 +216,6 @@ export default function SignUpPage() {
           </p>
         </Card>
       </div>
-    </>
+    </CartProvider>
   )
 }

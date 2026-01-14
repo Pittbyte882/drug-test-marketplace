@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { signIn } from "@/lib/auth"
 import { SiteHeader } from "@/components/site-header"
+import { CartProvider } from "@/lib/cart-context"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -34,7 +35,7 @@ export default function LoginPage() {
   }
 
   return (
-    <>
+    <CartProvider>
       <SiteHeader />
       <div className="container flex min-h-[calc(100vh-200px)] items-center justify-center py-12">
         <Card className="w-full max-w-md p-8">
@@ -85,6 +86,6 @@ export default function LoginPage() {
           </p>
         </Card>
       </div>
-    </>
+    </CartProvider>
   )
 }
