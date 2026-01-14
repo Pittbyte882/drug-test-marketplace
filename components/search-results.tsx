@@ -76,9 +76,7 @@ export function SearchResults() {
         if (data.success) {
           setResults(data.data)
           // Auto-expand first location
-          if (data.data.length > 0) {
-          setExpandedLocations(new Set([data.data[0].id]))
-        }
+          
         } else {
           throw new Error(data.error)
         }
