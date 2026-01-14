@@ -77,8 +77,8 @@ export function SearchResults() {
           setResults(data.data)
           // Auto-expand first location
           if (data.data.length > 0) {
-            setExpandedLocations(new Set([data.data[0].id]))
-          }
+          setExpandedLocations(new Set([data.data[0].id]))
+        }
         } else {
           throw new Error(data.error)
         }
@@ -337,72 +337,72 @@ export function SearchResults() {
                     </div>
                   </div>
 
-                  {/* Accordion for tests */}
-                  <div className="p-6">
-                    <button
-                      onClick={() => toggleLocation(location.id)}
-                      className="flex w-full items-center justify-between text-left transition-colors hover:text-primary"
-                    >
-                      <h4 className="font-semibold text-primary">
-                        Available Tests ({location.tests.length})
-                      </h4>
-                      {expandedLocations.has(location.id) ? (
-                        <ChevronUp className="h-5 w-5 text-muted-foreground" />
-                      ) : (
-                        <ChevronDown className="h-5 w-5 text-muted-foreground" />
-                      )}
-                    </button>
+                          {/* Accordion for tests */}
+        <div className="border-t">
+          <button
+            onClick={() => toggleLocation(location.id)}
+            className="flex w-full items-center justify-between p-6 text-left transition-colors hover:bg-muted/50"
+          >
+            <h4 className="font-semibold text-primary">
+              Available Tests ({location.tests.length})
+            </h4>
+            {expandedLocations.has(location.id) ? (
+              <ChevronUp className="h-5 w-5 text-muted-foreground" />
+            ) : (
+              <ChevronDown className="h-5 w-5 text-muted-foreground" />
+            )}
+          </button>
 
-                    {expandedLocations.has(location.id) && (
-                      <div className="mt-4">
-                        {location.tests.length === 0 ? (
-                          <p className="text-sm text-muted-foreground">
-                            No tests currently available at this location.
-                          </p>
-                        ) : (
-                          <div className="space-y-3">
-                            {location.tests.map((test) => (
-                              <div
-                                key={test.id}
-                                className="flex items-center justify-between rounded-lg border border-border/50 bg-card p-4 shadow-sm transition-shadow hover:shadow-md"
-                              >
-                                <div className="flex-1">
-                                  <div className="flex items-center gap-2">
-                                    <p className="font-medium text-primary">{test.name}</p>
-                                    <Badge variant="secondary" className="text-xs">
-                                      {test.test_type}
-                                    </Badge>
-                                  </div>
-                                  {test.description && (
-                                    <p className="mt-1 text-sm text-muted-foreground">{test.description}</p>
-                                  )}
-                                  {test.turnaround_time && (
-                                    <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
-                                      <Clock className="h-3 w-3" />
-                                      <span>Results in {test.turnaround_time}</span>
-                                    </div>
-                                  )}
-                                </div>
-                                <div className="ml-4 flex items-center gap-4">
-                                  <span className="text-lg font-bold text-primary">
-                                    ${test.price.toFixed(2)}
-                                  </span>
-                                  <Button
-                                    onClick={() => handleAddToCart(location, test)}
-                                    size="sm"
-                                    className="bg-primary hover:bg-primary/90"
-                                  >
-                                    <ShoppingCart className="mr-2 h-4 w-4" />
-                                    Add to Cart
-                                  </Button>
-                                </div>
-                              </div>
-                            ))}
+          {expandedLocations.has(location.id) && (
+            <div className="px-6 pb-6 pt-0">
+              {location.tests.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  No tests currently available at this location.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {location.tests.map((test) => (
+                    <div
+                      key={test.id}
+                      className="flex items-center justify-between rounded-lg border border-border/50 bg-card p-4 shadow-sm transition-shadow hover:shadow-md"
+                    >
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-primary">{test.name}</p>
+                          <Badge variant="secondary" className="text-xs">
+                            {test.test_type}
+                          </Badge>
+                        </div>
+                        {test.description && (
+                          <p className="mt-1 text-sm text-muted-foreground">{test.description}</p>
+                        )}
+                        {test.turnaround_time && (
+                          <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
+                            <Clock className="h-3 w-3" />
+                            <span>Results in {test.turnaround_time}</span>
                           </div>
                         )}
                       </div>
-                    )}
-                  </div>
+                      <div className="ml-4 flex items-center gap-4">
+                        <span className="text-lg font-bold text-primary">
+                          ${test.price.toFixed(2)}
+                        </span>
+                        <Button
+                          onClick={() => handleAddToCart(location, test)}
+                          size="sm"
+                          className="bg-primary hover:bg-primary/90"
+                        >
+                          <ShoppingCart className="mr-2 h-4 w-4" />
+                          Add to Cart
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
                 </Card>
               ))}
             </div>
