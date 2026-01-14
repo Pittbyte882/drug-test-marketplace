@@ -98,17 +98,17 @@ export async function GET(request: Request) {
 
     console.log("Search coordinates:", searchCoords)
 
-    // Get ALL active locations with coordinates
-    const { data: locations, error: locationsError } = await supabase
-      .from("locations")
-      .select(`
-        *,
-        companies (*)
-      `)
-      .eq("is_active", true)
-      .not("latitude", "is", null)
-      .not("longitude", "is", null)
-
+    // Get ALL active locations with coordinates from active companies
+const { data: locations, error: locationsError } = await supabase
+  .from("locations")
+  .select(`
+    *,
+    companies!inner (*)
+  `)
+  .eq("is_active", true)
+  .eq("companies.is_active", true)  // Add this line - only active companies
+  .not("latitude", "is", null)
+  .not("longitude", "is", null)
     if (locationsError) {
       console.error("Supabase error:", locationsError)
       throw locationsError

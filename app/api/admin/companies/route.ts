@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server"
 import { supabase } from "@/lib/supabase"
 
-// GET all companies
+// GET all companies (only active)
 export async function GET() {
   try {
     const { data, error } = await supabase
       .from('companies')
       .select('*')
+      .eq('is_active', true)  // Only show active companies
       .order('created_at', { ascending: false })
 
     if (error) throw error
@@ -17,7 +18,6 @@ export async function GET() {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 })
   }
 }
-
 // POST - Create new company
 export async function POST(request: Request) {
   try {
@@ -73,7 +73,7 @@ export async function PUT(request: Request) {
   }
 }
 
-// DELETE - Delete company
+// DELETE - Soft delete company (set is_active to false)
 export async function DELETE(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
@@ -83,16 +83,17 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ success: false, error: "Company ID required" }, { status: 400 })
     }
 
+    // Soft delete - set is_active to false
     const { error } = await supabase
       .from('companies')
-      .delete()
+      .update({ is_active: false })
       .eq('id', id)
 
     if (error) throw error
 
     return NextResponse.json({ success: true })
   } catch (error: any) {
-    console.error("Error deleting company:", error)
+    console.error("Error deactivating company:", error)
     return NextResponse.json({ success: false, error: error.message }, { status: 500 })
   }
 }

@@ -108,35 +108,34 @@ export function ManageCompanies() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this company? This will also delete all associated locations and tests.")) {
-      return
-    }
-
-    try {
-      const response = await fetch(`/api/admin/companies?id=${id}`, {
-        method: "DELETE",
-      })
-
-      const data = await response.json()
-
-      if (data.success) {
-        toast({
-          title: "Success",
-          description: "Company deleted successfully",
-        })
-        fetchCompanies()
-      } else {
-        throw new Error(data.error)
-      }
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to delete company",
-        variant: "destructive",
-      })
-    }
+  if (!confirm("Are you sure you want to deactivate this company? It will be hidden but can be reactivated later.")) {
+    return
   }
 
+  try {
+    const response = await fetch(`/api/admin/companies?id=${id}`, {
+      method: "DELETE",
+    })
+
+    const data = await response.json()
+
+    if (data.success) {
+      toast({
+        title: "Success",
+        description: "Company deactivated successfully",
+      })
+      fetchCompanies()
+    } else {
+      throw new Error(data.error)
+    }
+  } catch (error: any) {
+    toast({
+      title: "Error",
+      description: error.message || "Failed to deactivate company",
+      variant: "destructive",
+    })
+  }
+}
   const resetForm = () => {
     setFormData({
       name: "",
