@@ -304,6 +304,7 @@ export function SearchResults() {
                                 {location.address}, {location.city}, {location.state} {location.zip_code}
                               </span>
                             </div>
+                            {/* Phone number hidden from search results 
                             {(location.phone || location.companies.phone) && (
                               <div className="flex items-center gap-2">
                                 <Phone className="h-4 w-4 text-primary" />
@@ -312,6 +313,7 @@ export function SearchResults() {
                                 </a>
                               </div>
                             )}
+                              */}
                             {location.companies.hours_of_operation && (
                               <div className="flex items-center gap-2">
                                 <Clock className="h-4 w-4 text-primary" />
