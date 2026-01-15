@@ -75,8 +75,6 @@ export function SearchResults() {
 
         if (data.success) {
           setResults(data.data)
-          // Auto-expand first location
-          
         } else {
           throw new Error(data.error)
         }
@@ -127,7 +125,6 @@ export function SearchResults() {
       quantity: 1,
     })
 
-    // Get current search parameters to return to same results
     const currentParams = new URLSearchParams()
     if (city) currentParams.append("city", city)
     if (state) currentParams.append("state", state)
@@ -166,9 +163,9 @@ export function SearchResults() {
 
   if (loading) {
     return (
-      <div className="container py-12">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-primary">
+      <div className="container py-8 md:py-12">
+        <div className="mb-6 md:mb-8">
+          <h1 className="text-2xl md:text-3xl font-bold text-primary">
             Testing Locations near {getSearchLocation()}
           </h1>
         </div>
@@ -182,7 +179,7 @@ export function SearchResults() {
               ))}
             </div>
           </div>
-          <div className="h-[600px] animate-pulse rounded-lg bg-muted"></div>
+          <div className="h-[400px] md:h-[600px] animate-pulse rounded-lg bg-muted"></div>
         </div>
       </div>
     )
@@ -190,9 +187,8 @@ export function SearchResults() {
 
   if (!city && !state && !zipCode) {
     return (
-      <div className="container py-12">
-        {/* Search Bar */}
-        <div className="mb-8">
+      <div className="container py-8 md:py-12">
+        <div className="mb-6 md:mb-8">
           <form 
             onSubmit={(e) => {
               e.preventDefault()
@@ -207,18 +203,18 @@ export function SearchResults() {
                 window.location.href = `/search?${params.toString()}`
               }
             }}
-            className="mx-auto flex max-w-2xl gap-4"
+            className="mx-auto flex flex-col sm:flex-row max-w-2xl gap-4"
           >
             <Input
               type="text"
               name="search"
               placeholder="Enter city, state, or zip code"
-              className="h-14 flex-1 bg-white text-slate-900"
+              className="h-12 sm:h-14 flex-1 bg-white text-slate-900"
             />
             <Button
               type="submit"
               size="lg"
-              className="h-14 bg-[#F59E0B] px-8 font-semibold text-slate-900 hover:bg-[#F59E0B]/90"
+              className="h-12 sm:h-14 bg-[#F59E0B] px-6 sm:px-8 font-semibold text-slate-900 hover:bg-[#F59E0B]/90"
             >
               <Search className="mr-2 h-5 w-5" />
               SEARCH
@@ -226,14 +222,14 @@ export function SearchResults() {
           </form>
         </div>
 
-        <Card className="p-8 text-center">
-          <h2 className="text-2xl font-bold text-primary mb-4">
+        <Card className="p-6 md:p-8 text-center">
+          <h2 className="text-xl md:text-2xl font-bold text-primary mb-4">
             {searchParams.get("test_type") 
               ? `${searchParams.get("test_type")?.charAt(0).toUpperCase()}${searchParams.get("test_type")?.slice(1)} Testing Locations`
               : "Search for Testing Locations"
             }
           </h2>
-          <p className="text-muted-foreground">
+          <p className="text-sm md:text-base text-muted-foreground">
             Please enter city, state, or zip code to find testing locations near you.
           </p>
         </Card>
@@ -242,176 +238,185 @@ export function SearchResults() {
   }
 
   return (
-  <div className="container py-12">
-    {/* Gradient Header */}
-    <div className="bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50 border-b -mx-4 px-4 sm:mx-0 sm:px-0 mb-8 py-8 rounded-lg">
-      <h1 className="text-3xl font-bold text-primary">
-        {searchParams.get("test_type") 
-          ? `${searchParams.get("test_type")?.charAt(0).toUpperCase()}${searchParams.get("test_type")?.slice(1)} Testing Locations`
-          : "Testing Locations"
-        }
-        {(city || state || zipCode) && ` near ${getSearchLocation()}`}
-      </h1>
-      <p className="mt-2 text-muted-foreground">
-        {results.length} {results.length === 1 ? "location" : "locations"} found
-      </p>
-    </div>
+    <div className="container py-8 md:py-12">
+      {/* Gradient Header - Mobile Optimized */}
+      <div className="bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50 border-b rounded-lg mb-6 md:mb-8 py-6 md:py-8 px-4 md:px-6">
+        <h1 className="text-2xl md:text-3xl font-bold text-primary break-words">
+          {searchParams.get("test_type") 
+            ? `${searchParams.get("test_type")?.charAt(0).toUpperCase()}${searchParams.get("test_type")?.slice(1)} Testing Locations`
+            : "Testing Locations"
+          }
+          {(city || state || zipCode) && ` near ${getSearchLocation()}`}
+        </h1>
+        <p className="mt-2 text-sm md:text-base text-muted-foreground">
+          {results.length} {results.length === 1 ? "location" : "locations"} found
+        </p>
+      </div>
 
-    <div className="grid gap-6 lg:grid-cols-3">
-      <div className="lg:col-span-2">
-        {results.length === 0 ? (
-          <Card className="p-8 text-center">
-            {/* ... no results content ... */}
-          </Card>
-        ) : (
-          <div className="space-y-8">
-            {results.map((location, index) => (
-              <div key={location.id}>
-                <Card className="overflow-hidden border-l-4 border-l-primary shadow-md hover:shadow-xl transition-all duration-300">
-                  {/* Company Header with Gradient */}
-                  <div className="border-b bg-gradient-to-r from-blue-50 to-slate-50 p-6">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-start gap-4">
-                          {location.companies.logo_url && (
-                            <img
-                              src={location.companies.logo_url}
-                              alt={location.companies.name}
-                              className="h-12 w-12 rounded object-contain"
-                            />
-                          )}
-                          <div className="flex-1">
-                            <h3 className="text-xl font-semibold text-primary">
-                              {location.companies.name}
-                            </h3>
-                            {location.name !== location.companies.name && (
-                              <p className="text-sm text-muted-foreground">{location.name}</p>
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          {results.length === 0 ? (
+            <Card className="p-6 md:p-8 text-center">
+              <h3 className="text-lg md:text-xl font-semibold text-primary mb-2">No locations found</h3>
+              <p className="text-sm md:text-base text-muted-foreground mb-4">
+                No testing locations found for "{getSearchLocation()}". Try searching with a different zip code.
+              </p>
+              <Button onClick={() => window.history.back()}>
+                Go Back
+              </Button>
+            </Card>
+          ) : (
+            <div className="space-y-6 md:space-y-8">
+              {results.map((location, index) => (
+                <div key={location.id}>
+                  <Card className="overflow-hidden border-l-4 border-l-primary shadow-md hover:shadow-xl transition-all duration-300">
+                    {/* Company Header with Gradient - Mobile Optimized */}
+                    <div className="border-b bg-gradient-to-r from-blue-50 to-slate-50 p-4 md:p-6">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex flex-col sm:flex-row items-start gap-3 md:gap-4">
+                            {location.companies.logo_url && (
+                              <img
+                                src={location.companies.logo_url}
+                                alt={location.companies.name}
+                                className="h-10 w-10 md:h-12 md:w-12 rounded object-contain"
+                              />
                             )}
-                            {location.companies.description && (
-                              <p className="mt-2 text-sm text-muted-foreground">
-                                {location.companies.description}
-                              </p>
+                            <div className="flex-1">
+                              <h3 className="text-lg md:text-xl font-semibold text-primary break-words">
+                                {location.companies.name}
+                              </h3>
+                              {location.name !== location.companies.name && (
+                                <p className="text-xs md:text-sm text-muted-foreground">{location.name}</p>
+                              )}
+                              {location.companies.description && (
+                                <p className="mt-2 text-xs md:text-sm text-muted-foreground">
+                                  {location.companies.description}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <div className="mt-3 md:mt-4 flex flex-col gap-2 text-xs md:text-sm text-muted-foreground">
+                            <div className="flex items-start gap-2">
+                              <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                              <span className="break-words">
+                                {location.address}, {location.city}, {location.state} {location.zip_code}
+                              </span>
+                            </div>
+                            {(location.phone || location.companies.phone) && (
+                              <div className="flex items-center gap-2">
+                                <Phone className="h-4 w-4 text-primary" />
+                                <a href={`tel:${location.phone || location.companies.phone}`} className="hover:underline">
+                                  {location.phone || location.companies.phone}
+                                </a>
+                              </div>
+                            )}
+                            {location.companies.hours_of_operation && (
+                              <div className="flex items-center gap-2">
+                                <Clock className="h-4 w-4 text-primary" />
+                                <span>{location.companies.hours_of_operation}</span>
+                              </div>
+                            )}
+                            {location.companies.website && (
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs">🌐</span>
+                                <a 
+                                  href={location.companies.website}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-primary hover:underline break-all"
+                                >
+                                  Visit Website
+                                </a>
+                              </div>
                             )}
                           </div>
-                        </div>
-                        
-                        <div className="mt-4 flex flex-col gap-2 text-sm text-muted-foreground">
-                          <div className="flex items-start gap-2">
-                            <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                            <span>
-                              {location.address}, {location.city}, {location.state} {location.zip_code}
-                            </span>
-                          </div>
-                          {(location.phone || location.companies.phone) && (
-                            <div className="flex items-center gap-2">
-                              <Phone className="h-4 w-4 text-primary" />
-                              <span>{location.phone || location.companies.phone}</span>
-                            </div>
-                          )}
-                          {location.companies.hours_of_operation && (
-                            <div className="flex items-center gap-2">
-                              <Clock className="h-4 w-4 text-primary" />
-                              <span>{location.companies.hours_of_operation}</span>
-                            </div>
-                          )}
-                          {location.companies.website && (
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs">🌐</span>
-                              <a 
-                                href={location.companies.website}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-primary hover:underline"
-                              >
-                                Visit Website
-                              </a>
-                            </div>
-                          )}
                         </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Accordion for tests */}
-                  <div className="border-t border-primary/10">
-                    <button
-                      onClick={() => toggleLocation(location.id)}
-                      className="flex w-full items-center justify-between p-6 text-left transition-all hover:bg-gradient-to-r hover:from-primary/5 hover:to-blue-50"
-                    >
-                      <h4 className="font-semibold text-primary text-lg">
-                        Available Tests ({location.tests.length})
-                      </h4>
-                      {expandedLocations.has(location.id) ? (
-                        <ChevronUp className="h-5 w-5 text-primary" />
-                      ) : (
-                        <ChevronDown className="h-5 w-5 text-primary" />
-                      )}
-                    </button>
-
-                    {expandedLocations.has(location.id) && (
-                      <div className="px-6 pb-6 pt-0 bg-slate-50/30">
-                        {location.tests.length === 0 ? (
-                          <p className="text-sm text-muted-foreground">
-                            No tests currently available at this location.
-                          </p>
+                    {/* Accordion for tests - Mobile Optimized */}
+                    <div className="border-t border-primary/10">
+                      <button
+                        onClick={() => toggleLocation(location.id)}
+                        className="flex w-full items-center justify-between p-4 md:p-6 text-left transition-all hover:bg-gradient-to-r hover:from-primary/5 hover:to-blue-50"
+                      >
+                        <h4 className="font-semibold text-primary text-base md:text-lg">
+                          Available Tests ({location.tests.length})
+                        </h4>
+                        {expandedLocations.has(location.id) ? (
+                          <ChevronUp className="h-5 w-5 text-primary shrink-0" />
                         ) : (
-                          <div className="space-y-3">
-                            {location.tests.map((test) => (
-                              <div
-                                key={test.id}
-                                className="flex items-center justify-between rounded-lg border-2 border-border/50 bg-white p-4 shadow-sm transition-all hover:shadow-md hover:border-primary/50"
-                              >
-                                <div className="flex-1">
-                                  <div className="flex items-center gap-2">
-                                    <p className="font-medium text-primary">{test.name}</p>
-                                    <Badge variant="secondary" className="text-xs">
-                                      {test.test_type}
-                                    </Badge>
-                                  </div>
-                                  {test.description && (
-                                    <p className="mt-1 text-sm text-muted-foreground">{test.description}</p>
-                                  )}
-                                  {test.turnaround_time && (
-                                    <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
-                                      <Clock className="h-3 w-3" />
-                                      <span>Results in {test.turnaround_time}</span>
-                                    </div>
-                                  )}
-                                </div>
-                                <div className="ml-4 flex items-center gap-4">
-                                  <span className="text-lg font-bold text-primary">
-                                    ${test.price.toFixed(2)}
-                                  </span>
-                                  <Button
-                                    onClick={() => handleAddToCart(location, test)}
-                                    size="sm"
-                                    className="bg-primary hover:bg-primary/90 shadow-md"
-                                  >
-                                    <ShoppingCart className="mr-2 h-4 w-4" />
-                                    Add to Cart
-                                  </Button>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
+                          <ChevronDown className="h-5 w-5 text-primary shrink-0" />
                         )}
-                      </div>
-                    )}
-                  </div>
-                </Card>
-                
-                {/* Gradient divider between cards */}
-                {index < results.length - 1 && (
-                  <div className="h-1 bg-gradient-to-r from-transparent via-primary/20 to-transparent my-6" />
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+                      </button>
 
-        {/* Map */}
-        <div className="lg:sticky lg:top-20 lg:h-[calc(100vh-6rem)]">
+                      {expandedLocations.has(location.id) && (
+                        <div className="px-4 md:px-6 pb-4 md:pb-6 pt-0 bg-slate-50/30">
+                          {location.tests.length === 0 ? (
+                            <p className="text-sm text-muted-foreground">
+                              No tests currently available at this location.
+                            </p>
+                          ) : (
+                            <div className="space-y-3">
+                              {location.tests.map((test) => (
+                                <div
+                                  key={test.id}
+                                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 rounded-lg border-2 border-border/50 bg-white p-3 md:p-4 shadow-sm transition-all hover:shadow-md hover:border-primary/50"
+                                >
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      <p className="font-medium text-primary text-sm md:text-base break-words">{test.name}</p>
+                                      <Badge variant="secondary" className="text-xs">
+                                        {test.test_type}
+                                      </Badge>
+                                    </div>
+                                    {test.description && (
+                                      <p className="mt-1 text-xs md:text-sm text-muted-foreground break-words">{test.description}</p>
+                                    )}
+                                    {test.turnaround_time && (
+                                      <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
+                                        <Clock className="h-3 w-3" />
+                                        <span>Results in {test.turnaround_time}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4 shrink-0">
+                                    <span className="text-lg md:text-xl font-bold text-primary">
+                                      ${test.price.toFixed(2)}
+                                    </span>
+                                    <Button
+                                      onClick={() => handleAddToCart(location, test)}
+                                      size="sm"
+                                      className="bg-primary hover:bg-primary/90 shadow-md text-xs md:text-sm"
+                                    >
+                                      <ShoppingCart className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" />
+                                      <span className="hidden sm:inline">Add to Cart</span>
+                                      <span className="sm:hidden">Add</span>
+                                    </Button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </Card>
+                  
+                  {/* Gradient divider between cards */}
+                  {index < results.length - 1 && (
+                    <div className="h-0.5 md:h-1 bg-gradient-to-r from-transparent via-primary/20 to-transparent my-4 md:my-6" />
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Map - Hidden on mobile, visible on desktop */}
+        <div className="hidden lg:block lg:sticky lg:top-20 lg:h-[calc(100vh-6rem)]">
           <Card className="h-full overflow-hidden border-border/50 shadow-sm">
             {results.length > 0 ? (
               <iframe
