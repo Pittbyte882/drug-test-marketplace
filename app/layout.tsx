@@ -9,8 +9,8 @@ const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Talcada - Drug Testing Marketplace",
-  description: "Find drug testing, DNA testing, alcohol testing, and recovery services near you",
+  title: "Talcada Marketplace | Drug, Alcohol, DNA & Blood Testing",
+  description: "Book certified providers for drug, alcohol, DNA, and blood work nationwide. Talcada connects employers and individuals with compliant testing services.",
   generator: "v0.app",
   icons: {
     icon: [
