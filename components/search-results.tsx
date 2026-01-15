@@ -242,37 +242,34 @@ export function SearchResults() {
   }
 
   return (
-    <div className="container py-12">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-primary">
-          {searchParams.get("test_type") 
-            ? `${searchParams.get("test_type")?.charAt(0).toUpperCase()}${searchParams.get("test_type")?.slice(1)} Testing Locations`
-            : "Testing Locations"
-          }
-          {(city || state || zipCode) && ` near ${getSearchLocation()}`}
-        </h1>
-        <p className="mt-2 text-muted-foreground">
-          {results.length} {results.length === 1 ? "location" : "locations"} found
-        </p>
-      </div>
+  <div className="container py-12">
+    {/* Gradient Header */}
+    <div className="bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50 border-b -mx-4 px-4 sm:mx-0 sm:px-0 mb-8 py-8 rounded-lg">
+      <h1 className="text-3xl font-bold text-primary">
+        {searchParams.get("test_type") 
+          ? `${searchParams.get("test_type")?.charAt(0).toUpperCase()}${searchParams.get("test_type")?.slice(1)} Testing Locations`
+          : "Testing Locations"
+        }
+        {(city || state || zipCode) && ` near ${getSearchLocation()}`}
+      </h1>
+      <p className="mt-2 text-muted-foreground">
+        {results.length} {results.length === 1 ? "location" : "locations"} found
+      </p>
+    </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          {results.length === 0 ? (
-            <Card className="p-8 text-center">
-              <h3 className="text-xl font-semibold text-primary mb-2">No locations found</h3>
-              <p className="text-muted-foreground mb-4">
-                No testing locations found for "{getSearchLocation()}". Try searching with a different zip code.
-              </p>
-              <Button onClick={() => window.history.back()}>
-                Go Back
-              </Button>
-            </Card>
-          ) : (
-            <div className="space-y-6">
-              {results.map((location) => (
-                <Card key={location.id} className="overflow-hidden border-border/50 shadow-sm">
-                  <div className="border-b bg-muted/20 p-6">
+    <div className="grid gap-6 lg:grid-cols-3">
+      <div className="lg:col-span-2">
+        {results.length === 0 ? (
+          <Card className="p-8 text-center">
+            {/* ... no results content ... */}
+          </Card>
+        ) : (
+          <div className="space-y-8">
+            {results.map((location, index) => (
+              <div key={location.id}>
+                <Card className="overflow-hidden border-l-4 border-l-primary shadow-md hover:shadow-xl transition-all duration-300">
+                  {/* Company Header with Gradient */}
+                  <div className="border-b bg-gradient-to-r from-blue-50 to-slate-50 p-6">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-start gap-4">
@@ -300,20 +297,20 @@ export function SearchResults() {
                         
                         <div className="mt-4 flex flex-col gap-2 text-sm text-muted-foreground">
                           <div className="flex items-start gap-2">
-                            <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
+                            <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                             <span>
                               {location.address}, {location.city}, {location.state} {location.zip_code}
                             </span>
                           </div>
                           {(location.phone || location.companies.phone) && (
                             <div className="flex items-center gap-2">
-                              <Phone className="h-4 w-4" />
+                              <Phone className="h-4 w-4 text-primary" />
                               <span>{location.phone || location.companies.phone}</span>
                             </div>
                           )}
                           {location.companies.hours_of_operation && (
                             <div className="flex items-center gap-2">
-                              <Clock className="h-4 w-4" />
+                              <Clock className="h-4 w-4 text-primary" />
                               <span>{location.companies.hours_of_operation}</span>
                             </div>
                           )}
@@ -335,77 +332,83 @@ export function SearchResults() {
                     </div>
                   </div>
 
-                          {/* Accordion for tests */}
-        <div className="border-t">
-          <button
-            onClick={() => toggleLocation(location.id)}
-            className="flex w-full items-center justify-between p-6 text-left transition-colors hover:bg-muted/50"
-          >
-            <h4 className="font-semibold text-primary">
-              Available Tests ({location.tests.length})
-            </h4>
-            {expandedLocations.has(location.id) ? (
-              <ChevronUp className="h-5 w-5 text-muted-foreground" />
-            ) : (
-              <ChevronDown className="h-5 w-5 text-muted-foreground" />
-            )}
-          </button>
-
-          {expandedLocations.has(location.id) && (
-            <div className="px-6 pb-6 pt-0">
-              {location.tests.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  No tests currently available at this location.
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  {location.tests.map((test) => (
-                    <div
-                      key={test.id}
-                      className="flex items-center justify-between rounded-lg border border-border/50 bg-card p-4 shadow-sm transition-shadow hover:shadow-md"
+                  {/* Accordion for tests */}
+                  <div className="border-t border-primary/10">
+                    <button
+                      onClick={() => toggleLocation(location.id)}
+                      className="flex w-full items-center justify-between p-6 text-left transition-all hover:bg-gradient-to-r hover:from-primary/5 hover:to-blue-50"
                     >
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium text-primary">{test.name}</p>
-                          <Badge variant="secondary" className="text-xs">
-                            {test.test_type}
-                          </Badge>
-                        </div>
-                        {test.description && (
-                          <p className="mt-1 text-sm text-muted-foreground">{test.description}</p>
-                        )}
-                        {test.turnaround_time && (
-                          <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
-                            <Clock className="h-3 w-3" />
-                            <span>Results in {test.turnaround_time}</span>
+                      <h4 className="font-semibold text-primary text-lg">
+                        Available Tests ({location.tests.length})
+                      </h4>
+                      {expandedLocations.has(location.id) ? (
+                        <ChevronUp className="h-5 w-5 text-primary" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5 text-primary" />
+                      )}
+                    </button>
+
+                    {expandedLocations.has(location.id) && (
+                      <div className="px-6 pb-6 pt-0 bg-slate-50/30">
+                        {location.tests.length === 0 ? (
+                          <p className="text-sm text-muted-foreground">
+                            No tests currently available at this location.
+                          </p>
+                        ) : (
+                          <div className="space-y-3">
+                            {location.tests.map((test) => (
+                              <div
+                                key={test.id}
+                                className="flex items-center justify-between rounded-lg border-2 border-border/50 bg-white p-4 shadow-sm transition-all hover:shadow-md hover:border-primary/50"
+                              >
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2">
+                                    <p className="font-medium text-primary">{test.name}</p>
+                                    <Badge variant="secondary" className="text-xs">
+                                      {test.test_type}
+                                    </Badge>
+                                  </div>
+                                  {test.description && (
+                                    <p className="mt-1 text-sm text-muted-foreground">{test.description}</p>
+                                  )}
+                                  {test.turnaround_time && (
+                                    <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
+                                      <Clock className="h-3 w-3" />
+                                      <span>Results in {test.turnaround_time}</span>
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="ml-4 flex items-center gap-4">
+                                  <span className="text-lg font-bold text-primary">
+                                    ${test.price.toFixed(2)}
+                                  </span>
+                                  <Button
+                                    onClick={() => handleAddToCart(location, test)}
+                                    size="sm"
+                                    className="bg-primary hover:bg-primary/90 shadow-md"
+                                  >
+                                    <ShoppingCart className="mr-2 h-4 w-4" />
+                                    Add to Cart
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
                           </div>
                         )}
                       </div>
-                      <div className="ml-4 flex items-center gap-4">
-                        <span className="text-lg font-bold text-primary">
-                          ${test.price.toFixed(2)}
-                        </span>
-                        <Button
-                          onClick={() => handleAddToCart(location, test)}
-                          size="sm"
-                          className="bg-primary hover:bg-primary/90"
-                        >
-                          <ShoppingCart className="mr-2 h-4 w-4" />
-                          Add to Cart
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+                    )}
+                  </div>
                 </Card>
-              ))}
-            </div>
-          )}
-        </div>
+                
+                {/* Gradient divider between cards */}
+                {index < results.length - 1 && (
+                  <div className="h-1 bg-gradient-to-r from-transparent via-primary/20 to-transparent my-6" />
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
         {/* Map */}
         <div className="lg:sticky lg:top-20 lg:h-[calc(100vh-6rem)]">
