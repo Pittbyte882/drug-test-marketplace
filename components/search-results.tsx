@@ -4,11 +4,11 @@ import { useSearchParams } from "next/navigation"
 import { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { MapPin, Phone, Clock, ShoppingCart, Search, ChevronDown, ChevronUp } from "lucide-react"
+import { MapPin, Phone, Clock, Search } from "lucide-react"
 import { useCart } from "@/lib/cart-context"
 import { useToast } from "@/hooks/use-toast"
+import { TestCategoryCards } from "@/components/test-category-cards"
 
 interface Company {
   id: string
@@ -35,6 +35,15 @@ interface Location {
   companies: Company
 }
 
+interface TestCategory {
+  id: string
+  name: string
+  slug: string
+  description?: string
+  icon?: string
+  display_order: number
+}
+
 interface Test {
   id: string
   company_id: string
@@ -42,12 +51,22 @@ interface Test {
   description?: string
   price: number
   test_type: string
+  category_id?: string
   turnaround_time?: string
 }
 
 interface SearchResult extends Location {
   tests: Test[]
 }
+
+// Default categories - will be overridden by database values
+const DEFAULT_CATEGORIES: TestCategory[] = [
+  { id: '1', name: 'Drug Testing', slug: 'drug', description: 'Urine, instant, DOT panels', icon: 'pill', display_order: 1 },
+  { id: '2', name: 'Alcohol Testing', slug: 'alcohol', description: 'EtG, breathalyzer testing', icon: 'wine', display_order: 2 },
+  { id: '3', name: 'Hair Testing', slug: 'hair', description: 'Hair follicle testing', icon: 'scissors', display_order: 3 },
+  { id: '4', name: 'Oral Fluid Testing', slug: 'oral-fluid', description: 'Saliva testing', icon: 'droplets', display_order: 4 },
+  { id: '5', name: 'DNA Testing', slug: 'dna', description: 'Paternity and relationship testing', icon: 'dna', display_order: 5 },
+]
 
 export function SearchResults() {
   const searchParams = useSearchParams()
@@ -56,10 +75,25 @@ export function SearchResults() {
   const zipCode = searchParams.get("zip_code") || ""
   
   const [results, setResults] = useState<SearchResult[]>([])
+  const [categories, setCategories] = useState<TestCategory[]>(DEFAULT_CATEGORIES)
   const [loading, setLoading] = useState(true)
-  const [expandedLocations, setExpandedLocations] = useState<Set<string>>(new Set())
-  const { addItem } = useCart()
   const { toast } = useToast()
+
+  useEffect(() => {
+    async function fetchCategories() {
+      try {
+        const response = await fetch('/api/test-categories')
+        const data = await response.json()
+        if (data.success && data.data?.length > 0) {
+          setCategories(data.data)
+        }
+      } catch (error) {
+        console.error("Error fetching categories:", error)
+        // Keep default categories on error
+      }
+    }
+    fetchCategories()
+  }, [])
 
   useEffect(() => {
     async function fetchResults() {
@@ -96,62 +130,6 @@ export function SearchResults() {
       setLoading(false)
     }
   }, [city, state, zipCode, toast])
-
-  const toggleLocation = (locationId: string) => {
-    setExpandedLocations(prev => {
-      const newSet = new Set(prev)
-      if (newSet.has(locationId)) {
-        newSet.delete(locationId)
-      } else {
-        newSet.add(locationId)
-      }
-      return newSet
-    })
-  }
-
-  const handleAddToCart = (location: SearchResult, test: Test) => {
-    addItem({
-      company: location.companies,
-      location: {
-        id: location.id,
-        name: location.name,
-        address: location.address,
-        city: location.city,
-        state: location.state,
-        zip_code: location.zip_code,
-        phone: location.phone,
-      },
-      test: test,
-      quantity: 1,
-    })
-
-    const currentParams = new URLSearchParams()
-    if (city) currentParams.append("city", city)
-    if (state) currentParams.append("state", state)
-    if (zipCode) currentParams.append("zip_code", zipCode)
-    const searchUrl = `/search?${currentParams.toString()}`
-
-    toast({
-      title: "Added to cart",
-      description: (
-        <div className="flex gap-2 mt-2">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => window.location.href = searchUrl}
-          >
-            Continue Shopping
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => window.location.href = '/cart'}
-          >
-            View Cart
-          </Button>
-        </div>
-      ),
-    })
-  }
 
   const getSearchLocation = () => {
     if (city && state) return `${city}, ${state}`
@@ -304,16 +282,6 @@ export function SearchResults() {
                                 {location.address}, {location.city}, {location.state} {location.zip_code}
                               </span>
                             </div>
-                            {/* Phone number hidden from search results 
-                            {(location.phone || location.companies.phone) && (
-                              <div className="flex items-center gap-2">
-                                <Phone className="h-4 w-4 text-primary" />
-                                <a href={`tel:${location.phone || location.companies.phone}`} className="hover:underline">
-                                  {location.phone || location.companies.phone}
-                                </a>
-                              </div>
-                            )}
-                              */}
                             {location.companies.hours_of_operation && (
                               <div className="flex items-center gap-2">
                                 <Clock className="h-4 w-4 text-primary" />
@@ -338,73 +306,22 @@ export function SearchResults() {
                       </div>
                     </div>
 
-                    {/* Accordion for tests - Mobile Optimized */}
-                    <div className="border-t border-primary/10">
-                      <button
-                        onClick={() => toggleLocation(location.id)}
-                        className="flex w-full items-center justify-between p-4 md:p-6 text-left transition-all hover:bg-gradient-to-r hover:from-primary/5 hover:to-blue-50"
-                      >
-                        <h4 className="font-semibold text-primary text-base md:text-lg">
-                          Available Tests ({location.tests.length})
-                        </h4>
-                        {expandedLocations.has(location.id) ? (
-                          <ChevronUp className="h-5 w-5 text-primary shrink-0" />
-                        ) : (
-                          <ChevronDown className="h-5 w-5 text-primary shrink-0" />
-                        )}
-                      </button>
-
-                      {expandedLocations.has(location.id) && (
-                        <div className="px-4 md:px-6 pb-4 md:pb-6 pt-0 bg-slate-50/30">
-                          {location.tests.length === 0 ? (
-                            <p className="text-sm text-muted-foreground">
-                              No tests currently available at this location.
-                            </p>
-                          ) : (
-                            <div className="space-y-3">
-                              {location.tests.map((test) => (
-                                <div
-                                  key={test.id}
-                                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 rounded-lg border-2 border-border/50 bg-white p-3 md:p-4 shadow-sm transition-all hover:shadow-md hover:border-primary/50"
-                                >
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex flex-wrap items-center gap-2">
-                                      <p className="font-medium text-primary text-sm md:text-base break-words">{test.name}</p>
-                                      <Badge variant="secondary" className="text-xs">
-                                        {test.test_type}
-                                      </Badge>
-                                    </div>
-                                    {test.description && (
-                                      <p className="mt-1 text-xs md:text-sm text-muted-foreground break-words">{test.description}</p>
-                                    )}
-                                    {test.turnaround_time && (
-                                      <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
-                                        <Clock className="h-3 w-3" />
-                                        <span>Results in {test.turnaround_time}</span>
-                                      </div>
-                                    )}
-                                  </div>
-                                  <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4 shrink-0">
-                                    <span className="text-lg md:text-xl font-bold text-primary">
-                                      ${test.price.toFixed(2)}
-                                    </span>
-                                    <Button
-                                      onClick={() => handleAddToCart(location, test)}
-                                      size="sm"
-                                      className="bg-primary hover:bg-primary/90 shadow-md text-xs md:text-sm"
-                                    >
-                                      <ShoppingCart className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" />
-                                      <span className="hidden sm:inline">Add to Cart</span>
-                                      <span className="sm:hidden">Add</span>
-                                    </Button>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
+                    {/* New Category Cards Component */}
+                    <TestCategoryCards
+                      tests={location.tests}
+                      categories={categories}
+                      location={{
+                        id: location.id,
+                        name: location.name,
+                        address: location.address,
+                        city: location.city,
+                        state: location.state,
+                        zip_code: location.zip_code,
+                        phone: location.phone,
+                      }}
+                      company={location.companies}
+                      searchParams={{ city, state, zipCode }}
+                    />
                   </Card>
                   
                   {/* Gradient divider between cards */}
