@@ -72,6 +72,7 @@ export async function POST(request: Request) {
         state: data.state,
         zip_code: data.zip_code,
         phone: data.phone,
+        hours_of_operation: data.hours_of_operation,
         latitude: latitude,
         longitude: longitude,
         is_active: data.is_active ?? true,
