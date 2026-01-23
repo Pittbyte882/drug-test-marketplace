@@ -4,11 +4,11 @@ import { useSearchParams } from "next/navigation"
 import { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { MapPin, Phone, Clock, Search } from "lucide-react"
+import { MapPin, Phone, Clock, ShoppingCart, Search, ChevronDown, ChevronUp } from "lucide-react"
 import { useCart } from "@/lib/cart-context"
 import { useToast } from "@/hooks/use-toast"
-import { TestCategoryCards } from "@/components/test-category-cards"
 
 interface Company {
   id: string
@@ -30,18 +30,10 @@ interface Location {
   state: string
   zip_code: string
   phone?: string
+  hours_of_operation?: string
   latitude?: number | null
   longitude?: number | null
   companies: Company
-}
-
-interface TestCategory {
-  id: string
-  name: string
-  slug: string
-  description?: string
-  icon?: string
-  display_order: number
 }
 
 interface Test {
@@ -51,22 +43,12 @@ interface Test {
   description?: string
   price: number
   test_type: string
-  category_id?: string
   turnaround_time?: string
 }
 
 interface SearchResult extends Location {
   tests: Test[]
 }
-
-// Default categories - will be overridden by database values
-const DEFAULT_CATEGORIES: TestCategory[] = [
-  { id: '1', name: 'Drug Testing', slug: 'drug', description: 'Urine, instant, DOT panels', icon: 'pill', display_order: 1 },
-  { id: '2', name: 'Alcohol Testing', slug: 'alcohol', description: 'EtG, breathalyzer testing', icon: 'wine', display_order: 2 },
-  { id: '3', name: 'Hair Testing', slug: 'hair', description: 'Hair follicle testing', icon: 'scissors', display_order: 3 },
-  { id: '4', name: 'Oral Fluid Testing', slug: 'oral-fluid', description: 'Saliva testing', icon: 'droplets', display_order: 4 },
-  { id: '5', name: 'DNA Testing', slug: 'dna', description: 'Paternity and relationship testing', icon: 'dna', display_order: 5 },
-]
 
 export function SearchResults() {
   const searchParams = useSearchParams()
@@ -75,28 +57,11 @@ export function SearchResults() {
   const zipCode = searchParams.get("zip_code") || ""
   
   const [results, setResults] = useState<SearchResult[]>([])
-  const [categories, setCategories] = useState<TestCategory[]>(DEFAULT_CATEGORIES)
   const [loading, setLoading] = useState(true)
-  const [activeLocationId, setActiveLocationId] = useState<string | null>(null)
+  const [expandedLocations, setExpandedLocations] = useState<Set<string>>(new Set())
+  const [expandedHours, setExpandedHours] = useState<Set<string>>(new Set())
+  const { addItem } = useCart()
   const { toast } = useToast()
-
-  // Get the active location for the map
-  const activeLocation = results.find(loc => loc.id === activeLocationId) || results[0]
-
-  useEffect(() => {
-    async function fetchCategories() {
-      try {
-        const response = await fetch('/api/test-categories')
-        const data = await response.json()
-        if (data.success && data.data?.length > 0) {
-          setCategories(data.data)
-        }
-      } catch (error) {
-        console.error("Error fetching categories:", error)
-      }
-    }
-    fetchCategories()
-  }, [])
 
   useEffect(() => {
     async function fetchResults() {
@@ -112,10 +77,6 @@ export function SearchResults() {
 
         if (data.success) {
           setResults(data.data)
-          // Set first location as active by default
-          if (data.data.length > 0) {
-            setActiveLocationId(data.data[0].id)
-          }
         } else {
           throw new Error(data.error)
         }
@@ -138,6 +99,74 @@ export function SearchResults() {
     }
   }, [city, state, zipCode, toast])
 
+  const toggleLocation = (locationId: string) => {
+    setExpandedLocations(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(locationId)) {
+        newSet.delete(locationId)
+      } else {
+        newSet.add(locationId)
+      }
+      return newSet
+    })
+  }
+
+  const toggleHours = (locationId: string) => {
+    setExpandedHours(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(locationId)) {
+        newSet.delete(locationId)
+      } else {
+        newSet.add(locationId)
+      }
+      return newSet
+    })
+  }
+
+  const handleAddToCart = (location: SearchResult, test: Test) => {
+    addItem({
+      company: location.companies,
+      location: {
+        id: location.id,
+        name: location.name,
+        address: location.address,
+        city: location.city,
+        state: location.state,
+        zip_code: location.zip_code,
+        phone: location.phone,
+      },
+      test: test,
+      quantity: 1,
+    })
+
+    const currentParams = new URLSearchParams()
+    if (city) currentParams.append("city", city)
+    if (state) currentParams.append("state", state)
+    if (zipCode) currentParams.append("zip_code", zipCode)
+    const searchUrl = `/search?${currentParams.toString()}`
+
+    toast({
+      title: "Added to cart",
+      description: (
+        <div className="flex gap-2 mt-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => window.location.href = searchUrl}
+          >
+            Continue Shopping
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => window.location.href = '/cart'}
+          >
+            View Cart
+          </Button>
+        </div>
+      ),
+    })
+  }
+
   const getSearchLocation = () => {
     if (city && state) return `${city}, ${state}`
     if (city) return city
@@ -148,7 +177,7 @@ export function SearchResults() {
 
   if (loading) {
     return (
-      <div className="container py-8 md:py-12">
+      <div className="container py-6 md:py-12">
         <div className="mb-6 md:mb-8">
           <h1 className="text-2xl md:text-3xl font-bold text-primary">
             Testing Locations near {getSearchLocation()}
@@ -172,7 +201,7 @@ export function SearchResults() {
 
   if (!city && !state && !zipCode) {
     return (
-      <div className="container py-8 md:py-12">
+      <div className="container py-6 md:py-12">
         <div className="mb-6 md:mb-8">
           <form 
             onSubmit={(e) => {
@@ -188,20 +217,20 @@ export function SearchResults() {
                 window.location.href = `/search?${params.toString()}`
               }
             }}
-            className="mx-auto flex flex-col sm:flex-row max-w-2xl gap-4"
+            className="mx-auto flex max-w-2xl gap-2 md:gap-4 flex-col sm:flex-row"
           >
             <Input
               type="text"
               name="search"
               placeholder="Enter city, state, or zip code"
-              className="h-12 sm:h-14 flex-1 bg-white text-slate-900"
+              className="h-12 md:h-14 flex-1 bg-white text-slate-900"
             />
             <Button
               type="submit"
               size="lg"
-              className="h-12 sm:h-14 bg-[#F59E0B] px-6 sm:px-8 font-semibold text-slate-900 hover:bg-[#F59E0B]/90"
+              className="h-12 md:h-14 bg-[#F59E0B] px-6 md:px-8 font-semibold text-slate-900 hover:bg-[#F59E0B]/90 w-full sm:w-auto"
             >
-              <Search className="mr-2 h-5 w-5" />
+              <Search className="mr-2 h-4 md:h-5 w-4 md:w-5" />
               SEARCH
             </Button>
           </form>
@@ -214,7 +243,7 @@ export function SearchResults() {
               : "Search for Testing Locations"
             }
           </h2>
-          <p className="text-sm md:text-base text-muted-foreground">
+          <p className="text-muted-foreground text-sm md:text-base">
             Please enter city, state, or zip code to find testing locations near you.
           </p>
         </Card>
@@ -223,17 +252,17 @@ export function SearchResults() {
   }
 
   return (
-    <div className="container py-8 md:py-12">
+    <div className="container py-6 md:py-12">
       {/* Gradient Header - Mobile Optimized */}
       <div className="bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50 border-b rounded-lg mb-6 md:mb-8 py-6 md:py-8 px-4 md:px-6">
-        <h1 className="text-2xl md:text-3xl font-bold text-primary break-words">
+        <h1 className="text-2xl md:text-3xl font-bold text-primary">
           {searchParams.get("test_type") 
             ? `${searchParams.get("test_type")?.charAt(0).toUpperCase()}${searchParams.get("test_type")?.slice(1)} Testing Locations`
             : "Testing Locations"
           }
           {(city || state || zipCode) && ` near ${getSearchLocation()}`}
         </h1>
-        <p className="mt-2 text-sm md:text-base text-muted-foreground">
+        <p className="mt-2 text-muted-foreground text-sm md:text-base">
           {results.length} {results.length === 1 ? "location" : "locations"} found
         </p>
       </div>
@@ -243,7 +272,7 @@ export function SearchResults() {
           {results.length === 0 ? (
             <Card className="p-6 md:p-8 text-center">
               <h3 className="text-lg md:text-xl font-semibold text-primary mb-2">No locations found</h3>
-              <p className="text-sm md:text-base text-muted-foreground mb-4">
+              <p className="text-muted-foreground mb-4 text-sm md:text-base">
                 No testing locations found for "{getSearchLocation()}". Try searching with a different zip code.
               </p>
               <Button onClick={() => window.history.back()}>
@@ -252,153 +281,234 @@ export function SearchResults() {
             </Card>
           ) : (
             <div className="space-y-6 md:space-y-8">
-              {results.map((location, index) => {
-                const isActive = location.id === activeLocationId
-
-                return (
-                  <div key={location.id}>
-                    <Card 
-                      className={`
-                        overflow-hidden border-l-4 shadow-md transition-all duration-300 cursor-pointer
-                        ${isActive 
-                          ? 'border-l-primary ring-2 ring-primary/20 shadow-xl' 
-                          : 'border-l-primary/50 hover:shadow-xl hover:border-l-primary'
-                        }
-                      `}
-                      onClick={() => setActiveLocationId(location.id)}
-                    >
-                      {/* Company Header with Gradient - Mobile Optimized */}
-                      <div className={`
-                        border-b p-4 md:p-6 transition-colors
-                        ${isActive 
-                          ? 'bg-gradient-to-r from-primary/10 via-blue-50 to-slate-50' 
-                          : 'bg-gradient-to-r from-blue-50 to-slate-50'
-                        }
-                      `}>
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex flex-col sm:flex-row items-start gap-3 md:gap-4">
-                              {location.companies.logo_url && (
-                                <img
-                                  src={location.companies.logo_url}
-                                  alt={location.companies.name}
-                                  className="h-10 w-10 md:h-12 md:w-12 rounded object-contain"
-                                />
+              {results.map((location, index) => (
+                <div key={location.id}>
+                  <Card className="overflow-hidden border-l-4 border-l-primary shadow-md hover:shadow-xl transition-all duration-300">
+                    {/* Company Header - Mobile Optimized */}
+                    <div className="border-b bg-gradient-to-r from-blue-50 to-slate-50 p-4 md:p-6">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-start gap-3 md:gap-4">
+                            {location.companies.logo_url && (
+                              <img
+                                src={location.companies.logo_url}
+                                alt={location.companies.name}
+                                className="h-10 w-10 md:h-12 md:w-12 rounded object-contain flex-shrink-0"
+                              />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <h3 className="text-lg md:text-xl font-semibold text-primary break-words">
+                                {location.companies.name}
+                              </h3>
+                              {location.name !== location.companies.name && (
+                                <p className="text-xs md:text-sm text-muted-foreground">{location.name}</p>
                               )}
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2">
-                                  <h3 className="text-lg md:text-xl font-semibold text-primary break-words">
-                                    {location.companies.name}
-                                  </h3>
-                                  {isActive && (
-                                    <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full">
-                                      Viewing on map
-                                    </span>
-                                  )}
-                                </div>
-                                {location.name !== location.companies.name && (
-                                  <p className="text-xs md:text-sm text-muted-foreground">{location.name}</p>
-                                )}
-                                {location.companies.description && (
-                                  <p className="mt-2 text-xs md:text-sm text-muted-foreground">
-                                    {location.companies.description}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                            
-                            <div className="mt-3 md:mt-4 flex flex-col gap-2 text-xs md:text-sm text-muted-foreground">
-                              <div className="flex items-start gap-2">
-                                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                                <span className="break-words">
-                                  {location.address}, {location.city}, {location.state} {location.zip_code}
-                                </span>
-                              </div>
-                              {location.companies.hours_of_operation && (
-                                <div className="flex items-center gap-2">
-                                  <Clock className="h-4 w-4 text-primary" />
-                                  <span>{location.companies.hours_of_operation}</span>
-                                </div>
-                              )}
-                              {location.companies.website && (
-                                <div className="flex items-center gap-2">
-                                  <span className="text-xs">🌐</span>
-                                  <a 
-                                    href={location.companies.website}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-primary hover:underline break-all"
-                                    onClick={(e) => e.stopPropagation()}
-                                  >
-                                    Visit Website
-                                  </a>
-                                </div>
+                              {location.companies.description && (
+                                <p className="mt-2 text-xs md:text-sm text-muted-foreground">
+                                  {location.companies.description}
+                                </p>
                               )}
                             </div>
                           </div>
+                          
+                          <div className="mt-3 md:mt-4 flex flex-col gap-2 text-xs md:text-sm text-muted-foreground">
+                            <div className="flex items-start gap-2">
+                              <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                              <span className="break-words">
+                                {location.address}, {location.city}, {location.state} {location.zip_code}
+                              </span>
+                            </div>
+
+                            {/* Hours of Operation with View Button */}
+{(() => {
+  const hours = location.hours_of_operation || location.companies.hours_of_operation
+  if (!hours) return null
+  
+  const isDetailed = hours.includes('*') || hours.includes('\n') || hours.length > 50
+  
+  if (!isDetailed) {
+    // Simple hours - show inline
+    return (
+      <div className="flex items-center gap-2">
+        <Clock className="h-4 w-4 text-primary flex-shrink-0" />
+        <span>{hours}</span>
+      </div>
+    )
+  }
+  
+  // Parse and format detailed hours
+  const formatHoursDisplay = (hoursText: string) => {
+    // Split by day names to separate each day's hours
+    const dayPattern = /(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday):/g
+    const parts = hoursText.split(dayPattern).filter(Boolean)
+    
+    const formatted = []
+    for (let i = 0; i < parts.length; i += 2) {
+      if (i + 1 < parts.length) {
+        const day = parts[i].trim()
+        const info = parts[i + 1].trim()
+        
+        // Split the info to separate main hours from lunch hours
+        const infoLines = info.split(/(?=Closed for Lunch:)/i)
+        
+        formatted.push(
+          <div key={day} className="grid grid-cols-[100px_1fr] gap-2 py-2 border-b border-slate-200 last:border-0">
+            <span className="font-bold text-primary text-sm">{day}</span>
+            <div className="text-sm text-muted-foreground space-y-1">
+              {infoLines.map((line, idx) => (
+                <div key={idx} className={idx > 0 ? 'text-xs italic pl-2' : ''}>
+                  {line.trim()}
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      }
+    }
+    
+    return formatted
+  }
+  
+  // Detailed hours - show with expand button
+  return (
+    <div>
+      <button
+        onClick={() => toggleHours(location.id)}
+        className="flex items-center gap-2 text-primary hover:underline transition-colors"
+      >
+        <Clock className="h-4 w-4 flex-shrink-0" />
+        <span className="text-sm font-medium">
+          {expandedHours.has(location.id) ? 'Hide Hours' : 'View Hours'}
+        </span>
+        {expandedHours.has(location.id) ? (
+          <ChevronUp className="h-3 w-3" />
+        ) : (
+          <ChevronDown className="h-3 w-3" />
+        )}
+      </button>
+      
+      {expandedHours.has(location.id) && (
+        <div className="mt-3 rounded-lg bg-gradient-to-br from-blue-50 to-slate-50 p-4 border border-primary/20 shadow-sm">
+          <div className="space-y-0">
+            {formatHoursDisplay(hours)}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+})()}
+
+                            {location.companies.website && (
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs">🌐</span>
+                                <a 
+                                  href={location.companies.website}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-primary hover:underline break-all"
+                                >
+                                  Visit Website
+                                </a>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
+                    </div>
 
-                      {/* New Category Cards Component */}
-                      <div onClick={(e) => e.stopPropagation()}>
-                        <TestCategoryCards
-                          tests={location.tests}
-                          categories={categories}
-                          location={{
-                            id: location.id,
-                            name: location.name,
-                            address: location.address,
-                            city: location.city,
-                            state: location.state,
-                            zip_code: location.zip_code,
-                            phone: location.phone,
-                          }}
-                          company={location.companies}
-                          searchParams={{ city, state, zipCode }}
-                        />
-                      </div>
-                    </Card>
-                    
-                    {/* Gradient divider between cards */}
-                    {index < results.length - 1 && (
-                      <div className="h-0.5 md:h-1 bg-gradient-to-r from-transparent via-primary/20 to-transparent my-4 md:my-6" />
-                    )}
-                  </div>
-                )
-              })}
+                    {/* Accordion for tests - Mobile Optimized */}
+                    <div className="border-t border-primary/10">
+                      <button
+                        onClick={() => toggleLocation(location.id)}
+                        className="flex w-full items-center justify-between p-4 md:p-6 text-left transition-all hover:bg-gradient-to-r hover:from-primary/5 hover:to-blue-50"
+                      >
+                        <h4 className="font-semibold text-primary text-base md:text-lg">
+                          Available Tests ({location.tests.length})
+                        </h4>
+                        {expandedLocations.has(location.id) ? (
+                          <ChevronUp className="h-5 w-5 text-primary flex-shrink-0" />
+                        ) : (
+                          <ChevronDown className="h-5 w-5 text-primary flex-shrink-0" />
+                        )}
+                      </button>
+
+                      {expandedLocations.has(location.id) && (
+                        <div className="px-4 md:px-6 pb-4 md:pb-6 pt-0 bg-slate-50/30">
+                          {location.tests.length === 0 ? (
+                            <p className="text-sm text-muted-foreground">
+                              No tests currently available at this location.
+                            </p>
+                          ) : (
+                            <div className="space-y-3">
+                              {location.tests.map((test) => (
+                                <div
+                                  key={test.id}
+                                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 rounded-lg border-2 border-border/50 bg-white p-3 md:p-4 shadow-sm transition-all hover:shadow-md hover:border-primary/50"
+                                >
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      <p className="font-medium text-primary text-sm md:text-base break-words">{test.name}</p>
+                                      <Badge variant="secondary" className="text-xs">
+                                        {test.test_type}
+                                      </Badge>
+                                    </div>
+                                    {test.description && (
+                                      <p className="mt-1 text-xs md:text-sm text-muted-foreground">{test.description}</p>
+                                    )}
+                                    {test.turnaround_time && (
+                                      <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
+                                        <Clock className="h-3 w-3 flex-shrink-0" />
+                                        <span>Results in {test.turnaround_time}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center justify-between sm:flex-col sm:items-end gap-2">
+                                    <span className="text-lg md:text-xl font-bold text-primary whitespace-nowrap">
+                                      ${test.price.toFixed(2)}
+                                    </span>
+                                    <Button
+                                      onClick={() => handleAddToCart(location, test)}
+                                      size="sm"
+                                      className="bg-primary hover:bg-primary/90 shadow-md text-xs md:text-sm whitespace-nowrap"
+                                    >
+                                      <ShoppingCart className="mr-1 md:mr-2 h-3 md:h-4 w-3 md:w-4" />
+                                      Add to Cart
+                                    </Button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </Card>
+                  
+                  {/* Gradient divider between cards */}
+                  {index < results.length - 1 && (
+                    <div className="h-1 bg-gradient-to-r from-transparent via-primary/20 to-transparent my-4 md:my-6" />
+                  )}
+                </div>
+              ))}
             </div>
           )}
         </div>
 
-        {/* Map - Hidden on mobile, visible on desktop */}
+        {/* Map - Hidden on mobile, shown on large screens */}
         <div className="hidden lg:block lg:sticky lg:top-20 lg:h-[calc(100vh-6rem)]">
           <Card className="h-full overflow-hidden border-border/50 shadow-sm">
-            {results.length > 0 && activeLocation ? (
-              <div className="h-full flex flex-col">
-                {/* Map Header showing current location */}
-                <div className="p-3 border-b bg-gradient-to-r from-primary/5 to-blue-50">
-                  <p className="text-sm font-medium text-primary truncate">
-                    {activeLocation.companies.name}
-                  </p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {activeLocation.address}, {activeLocation.city}, {activeLocation.state} {activeLocation.zip_code}
-                  </p>
-                </div>
-                <div className="flex-1">
-                  <iframe
-                    key={activeLocation.id}
-                    width="100%"
-                    height="100%"
-                    style={{ border: 0 }}
-                    loading="lazy"
-                    allowFullScreen
-                    referrerPolicy="no-referrer-when-downgrade"
-                    src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=${encodeURIComponent(
-                      `${activeLocation.address}, ${activeLocation.city}, ${activeLocation.state} ${activeLocation.zip_code}`
-                    )}&zoom=15`}
-                  />
-                </div>
-              </div>
+            {results.length > 0 ? (
+              <iframe
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                loading="lazy"
+                allowFullScreen
+                referrerPolicy="no-referrer-when-downgrade"
+                src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=${encodeURIComponent(
+                  `${results[0].address}, ${results[0].city}, ${results[0].state} ${results[0].zip_code}`
+                )}&zoom=14`}
+              />
             ) : (
               <div className="flex h-full items-center justify-center bg-muted/20 p-8 text-center">
                 <div>
