@@ -3,24 +3,23 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useCart } from "@/lib/cart-context"
+import { useAuth } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card } from "@/components/ui/card"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { loadStripe } from "@stripe/stripe-js"
-import { getCurrentUser, signUp } from "@/lib/auth"
 import Link from "next/link"
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
 export function CheckoutForm() {
   const { items, total, clearCart } = useCart()
+  const { customer } = useAuth()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
-  const [currentUser, setCurrentUser] = useState<any>(null)
   const [accountType, setAccountType] = useState<"individual" | "company">("individual")
-  const [createAccount, setCreateAccount] = useState(false)
   
   const [formData, setFormData] = useState({
     fullName: "",
@@ -28,55 +27,26 @@ export function CheckoutForm() {
     contactPerson: "",
     email: "",
     phone: "",
-    password: "",
-    confirmPassword: "",
   })
 
+  // Pre-fill form if user is logged in
   useEffect(() => {
-    checkUser()
-  }, [])
-
-  const checkUser = async () => {
-    const user = await getCurrentUser()
-    setCurrentUser(user)
-  }
+    if (customer) {
+      setFormData({
+        fullName: `${customer.first_name} ${customer.last_name}`,
+        companyName: "",
+        contactPerson: `${customer.first_name} ${customer.last_name}`,
+        email: customer.email,
+        phone: customer.phone || "",
+      })
+    }
+  }, [customer])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
 
     try {
-      // If creating account, sign up first
-      if (createAccount && !currentUser) {
-        if (formData.password !== formData.confirmPassword) {
-          alert("Passwords do not match")
-          setLoading(false)
-          return
-        }
-
-        if (formData.password.length < 6) {
-          alert("Password must be at least 6 characters")
-          setLoading(false)
-          return
-        }
-
-        const result = await signUp({
-          email: formData.email,
-          password: formData.password,
-          accountType: accountType,
-          fullName: accountType === 'individual' ? formData.fullName : formData.contactPerson,
-          companyName: accountType === 'company' ? formData.companyName : undefined,
-          contactPerson: accountType === 'company' ? formData.contactPerson : undefined,
-          phone: formData.phone,
-        })
-
-        if (!result.success) {
-          alert("Failed to create account: " + result.error)
-          setLoading(false)
-          return
-        }
-      }
-
       // Prepare customer data based on account type
       const customerData = accountType === 'individual' 
         ? {
@@ -136,10 +106,10 @@ export function CheckoutForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Show logged in status */}
-      {currentUser ? (
+      {customer ? (
         <Card className="p-4 bg-green-50 border-green-200">
           <p className="text-sm text-green-800">
-            ✓ Logged in as <strong>{currentUser.email}</strong>
+            ✓ Logged in as <strong>{customer.email}</strong>
           </p>
         </Card>
       ) : (
@@ -149,12 +119,16 @@ export function CheckoutForm() {
             <Link href="/login" className="underline font-semibold">
               Sign in
             </Link>
+            {" "}or{" "}
+            <Link href="/register" className="underline font-semibold">
+              Create account
+            </Link>
           </p>
         </Card>
       )}
 
       {/* Account Type Selection */}
-      {!currentUser && (
+      {!customer && (
         <Card className="p-6">
           <h2 className="text-xl font-semibold mb-4">Account Type</h2>
           <RadioGroup value={accountType} onValueChange={(value: any) => setAccountType(value)}>
@@ -196,6 +170,7 @@ export function CheckoutForm() {
                 value={formData.fullName}
                 onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                 required
+                disabled={!!customer}
               />
             </div>
           )}
@@ -234,6 +209,7 @@ export function CheckoutForm() {
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               required
+              disabled={!!customer}
             />
           </div>
 
@@ -248,55 +224,6 @@ export function CheckoutForm() {
             />
           </div>
         </div>
-
-        {/* Create Account Option */}
-        {!currentUser && (
-          <div className="mt-6 pt-6 border-t">
-            <div className="flex items-center space-x-2 mb-4">
-              <input
-                type="checkbox"
-                id="createAccount"
-                checked={createAccount}
-                onChange={(e) => setCreateAccount(e.target.checked)}
-                className="h-4 w-4"
-              />
-              <Label htmlFor="createAccount" className="font-normal cursor-pointer">
-                Create an account for faster checkout next time
-              </Label>
-            </div>
-
-            {createAccount && (
-              <div className="space-y-4 bg-muted/30 p-4 rounded-lg">
-                <p className="text-sm text-muted-foreground mb-2">
-                  Set a password to create your account
-                </p>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password (min. 6 characters)</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    required={createAccount}
-                    minLength={6}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirm Password</Label>
-                  <Input
-                    id="confirmPassword"
-                    type="password"
-                    value={formData.confirmPassword}
-                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                    required={createAccount}
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-        )}
       </Card>
 
       {/* Order Summary */}

@@ -2,8 +2,16 @@
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { ShoppingCart, Phone } from "lucide-react"
+import { ShoppingCart, Phone, User, LogIn } from "lucide-react"
 import { useCart } from "@/lib/cart-context"
+import { useAuth } from "@/lib/auth-context"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 const drugTests = [
   { name: "Urine Drug Testing", href: "/tests/drug-tests" },
@@ -66,6 +74,7 @@ const resources = [
 
 export function SiteHeader() {
   const { items } = useCart()
+  const { customer, logout } = useAuth()
   const cartCount = items.reduce((sum, item) => sum + item.quantity, 0)
 
   return (
@@ -113,7 +122,123 @@ export function SiteHeader() {
           >
             <Phone className="h-5 w-5 text-primary" />
           </a>
+
+          {/* User Menu / Login - Desktop */}
+          {customer ? (
+            <div className="hidden md:block">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="gap-2">
+                    <User className="h-4 w-4" />
+                    {customer.first_name}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <div className="px-2 py-1.5">
+                    <p className="text-sm font-medium text-primary">
+                      {customer.first_name} {customer.last_name}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{customer.email}</p>
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard" className="cursor-pointer">
+                      Dashboard
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard/orders" className="cursor-pointer">
+                      My Orders
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard/results" className="cursor-pointer">
+                      Test Results
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard/profile" className="cursor-pointer">
+                      Profile
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={logout} className="cursor-pointer text-destructive">
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          ) : (
+            <div className="hidden md:flex items-center gap-2">
+              <Link href="/login">
+                <Button variant="ghost" size="sm" className="gap-2">
+                  <LogIn className="h-4 w-4" />
+                  Login
+                </Button>
+              </Link>
+              <Link href="/register">
+                <Button size="sm" className="bg-primary hover:bg-primary/90">
+                  Sign Up
+                </Button>
+              </Link>
+            </div>
+          )}
+
+          {/* User Menu / Login - Mobile */}
+          {customer ? (
+            <div className="md:hidden">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <User className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <div className="px-2 py-1.5">
+                    <p className="text-sm font-medium text-primary">
+                      {customer.first_name} {customer.last_name}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{customer.email}</p>
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard" className="cursor-pointer">
+                      Dashboard
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard/orders" className="cursor-pointer">
+                      My Orders
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard/results" className="cursor-pointer">
+                      Test Results
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard/profile" className="cursor-pointer">
+                      Profile
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={logout} className="cursor-pointer text-destructive">
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          ) : (
+            <div className="md:hidden flex items-center gap-2">
+              <Link href="/login">
+                <Button variant="ghost" size="icon">
+                  <LogIn className="h-5 w-5" />
+                </Button>
+              </Link>
+            </div>
+          )}
           
+          {/* Cart - Always visible */}
           <Link href="/cart">
             <Button variant="ghost" size="icon" className="relative">
               <ShoppingCart className="h-5 w-5" />
