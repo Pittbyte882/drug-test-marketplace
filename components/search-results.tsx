@@ -78,8 +78,12 @@ export function SearchResults() {
   const [results, setResults] = useState<SearchResult[]>([])
   const [categories, setCategories] = useState<TestCategory[]>(DEFAULT_CATEGORIES)
   const [expandedHours, setExpandedHours] = useState<Set<string>>(new Set())
+  const [activeLocationId, setActiveLocationId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const { toast } = useToast()
+
+  // Get the active location for the map
+  const activeLocation = results.find(loc => loc.id === activeLocationId) || results[0]
 
   const toggleHours = (locationId: string) => {
     setExpandedHours(prev => {
@@ -123,6 +127,10 @@ export function SearchResults() {
 
         if (data.success) {
           setResults(data.data)
+          // Set first location as active by default
+          if (data.data.length > 0) {
+            setActiveLocationId(data.data[0].id)
+          }
         } else {
           throw new Error(data.error)
         }
@@ -259,35 +267,60 @@ export function SearchResults() {
             </Card>
           ) : (
             <div className="space-y-6 md:space-y-8">
-              {results.map((location, index) => (
-                <div key={location.id}>
-                  <Card className="overflow-hidden border-l-4 border-l-primary shadow-md hover:shadow-xl transition-all duration-300">
-                    {/* Company Header with Gradient - Mobile Optimized */}
-                    <div className="border-b bg-gradient-to-r from-blue-50 to-slate-50 p-4 md:p-6">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex flex-col sm:flex-row items-start gap-3 md:gap-4">
-                            {location.companies.logo_url && (
-                              <img
-                                src={location.companies.logo_url}
-                                alt={location.companies.name}
-                                className="h-10 w-10 md:h-12 md:w-12 rounded object-contain"
-                              />
-                            )}
-                            <div className="flex-1">
-                              <h3 className="text-lg md:text-xl font-semibold text-primary break-words">
-                                {location.companies.name}
-                              </h3>
-                              {location.name !== location.companies.name && (
-                                <p className="text-xs md:text-sm text-muted-foreground">{location.name}</p>
+              {results.map((location, index) => {
+                const isActive = location.id === activeLocationId
+
+                return (
+                  <div key={location.id}>
+                    <Card 
+                      className={`
+                        overflow-hidden border-l-4 shadow-md transition-all duration-300 cursor-pointer
+                        ${isActive 
+                          ? 'border-l-primary ring-2 ring-primary/20 shadow-xl' 
+                          : 'border-l-primary/50 hover:shadow-xl hover:border-l-primary'
+                        }
+                      `}
+                      onClick={() => setActiveLocationId(location.id)}
+                    >
+                      {/* Company Header with Gradient - Mobile Optimized */}
+                      <div className={`
+                        border-b p-4 md:p-6 transition-colors
+                        ${isActive 
+                          ? 'bg-gradient-to-r from-primary/10 via-blue-50 to-slate-50' 
+                          : 'bg-gradient-to-r from-blue-50 to-slate-50'
+                        }
+                      `}>
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex flex-col sm:flex-row items-start gap-3 md:gap-4">
+                              {location.companies.logo_url && (
+                                <img
+                                  src={location.companies.logo_url}
+                                  alt={location.companies.name}
+                                  className="h-10 w-10 md:h-12 md:w-12 rounded object-contain"
+                                />
                               )}
-                              {location.companies.description && (
-                                <p className="mt-2 text-xs md:text-sm text-muted-foreground">
-                                  {location.companies.description}
-                                </p>
-                              )}
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                  <h3 className="text-lg md:text-xl font-semibold text-primary break-words">
+                                    {location.companies.name}
+                                  </h3>
+                                  {isActive && (
+                                    <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full">
+                                      Viewing on map
+                                    </span>
+                                  )}
+                                </div>
+                                {location.name !== location.companies.name && (
+                                  <p className="text-xs md:text-sm text-muted-foreground">{location.name}</p>
+                                )}
+                                {location.companies.description && (
+                                  <p className="mt-2 text-xs md:text-sm text-muted-foreground">
+                                    {location.companies.description}
+                                  </p>
+                                )}
+                              </div>
                             </div>
-                          </div>
                           
                           <div className="mt-3 md:mt-4 flex flex-col gap-2 text-xs md:text-sm text-muted-foreground">
                             <div className="flex items-start gap-2">
@@ -348,7 +381,10 @@ export function SearchResults() {
                               return (
                                 <div>
                                   <button
-                                    onClick={() => toggleHours(location.id)}
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      toggleHours(location.id)
+                                    }}
                                     className="flex items-center gap-2 text-primary hover:underline transition-colors"
                                   >
                                     <Clock className="h-4 w-4 flex-shrink-0" />
@@ -379,6 +415,7 @@ export function SearchResults() {
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="text-primary hover:underline break-all"
+                                  onClick={(e) => e.stopPropagation()}
                                 >
                                   Visit Website
                                 </a>
@@ -390,21 +427,23 @@ export function SearchResults() {
                     </div>
 
                     {/* New Category Cards Component */}
-                    <TestCategoryCards
-                      tests={location.tests}
-                      categories={categories}
-                      location={{
-                        id: location.id,
-                        name: location.name,
-                        address: location.address,
-                        city: location.city,
-                        state: location.state,
-                        zip_code: location.zip_code,
-                        phone: location.phone,
-                      }}
-                      company={location.companies}
-                      searchParams={{ city, state, zipCode }}
-                    />
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <TestCategoryCards
+                        tests={location.tests}
+                        categories={categories}
+                        location={{
+                          id: location.id,
+                          name: location.name,
+                          address: location.address,
+                          city: location.city,
+                          state: location.state,
+                          zip_code: location.zip_code,
+                          phone: location.phone,
+                        }}
+                        company={location.companies}
+                        searchParams={{ city, state, zipCode }}
+                      />
+                    </div>
                   </Card>
                   
                   {/* Gradient divider between cards */}
@@ -412,7 +451,8 @@ export function SearchResults() {
                     <div className="h-0.5 md:h-1 bg-gradient-to-r from-transparent via-primary/20 to-transparent my-4 md:my-6" />
                   )}
                 </div>
-              ))}
+              )
+            })}
             </div>
           )}
         </div>
@@ -420,18 +460,32 @@ export function SearchResults() {
         {/* Map - Hidden on mobile, visible on desktop */}
         <div className="hidden lg:block lg:sticky lg:top-20 lg:h-[calc(100vh-6rem)]">
           <Card className="h-full overflow-hidden border-border/50 shadow-sm">
-            {results.length > 0 ? (
-              <iframe
-                width="100%"
-                height="100%"
-                style={{ border: 0 }}
-                loading="lazy"
-                allowFullScreen
-                referrerPolicy="no-referrer-when-downgrade"
-                src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=${encodeURIComponent(
-                  `${results[0].address}, ${results[0].city}, ${results[0].state} ${results[0].zip_code}`
-                )}&zoom=14`}
-              />
+            {results.length > 0 && activeLocation ? (
+              <div className="h-full flex flex-col">
+                {/* Map Header showing current location */}
+                <div className="p-3 border-b bg-gradient-to-r from-primary/5 to-blue-50">
+                  <p className="text-sm font-medium text-primary truncate">
+                    {activeLocation.companies.name}
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {activeLocation.address}, {activeLocation.city}, {activeLocation.state} {activeLocation.zip_code}
+                  </p>
+                </div>
+                <div className="flex-1">
+                  <iframe
+                    key={activeLocation.id}
+                    width="100%"
+                    height="100%"
+                    style={{ border: 0 }}
+                    loading="lazy"
+                    allowFullScreen
+                    referrerPolicy="no-referrer-when-downgrade"
+                    src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=${encodeURIComponent(
+                      `${activeLocation.address}, ${activeLocation.city}, ${activeLocation.state} ${activeLocation.zip_code}`
+                    )}&zoom=15`}
+                  />
+                </div>
+              </div>
             ) : (
               <div className="flex h-full items-center justify-center bg-muted/20 p-8 text-center">
                 <div>
