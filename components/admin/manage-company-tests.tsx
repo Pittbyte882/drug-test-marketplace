@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
-import { Plus, Edit, Trash2 } from "lucide-react"
+import { Plus, Edit, Trash2, Search, X } from "lucide-react"
 
 interface Company {
   id: string
@@ -35,6 +35,7 @@ export function ManageCompanyTests() {
   const [companies, setCompanies] = useState<Company[]>([])
   const [loading, setLoading] = useState(true)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
   const [formData, setFormData] = useState({
     company_id: "",
     name: "",
@@ -169,6 +170,20 @@ export function ManageCompanyTests() {
     })
   }
 
+  // Filter locations based on search query
+  const filteredLocations = locations.filter((location) => {
+    const query = searchQuery.toLowerCase()
+    return (
+      location.name.toLowerCase().includes(query) ||
+      location.address.toLowerCase().includes(query) ||
+      location.city.toLowerCase().includes(query) ||
+      location.state.toLowerCase().includes(query) ||
+      location.zip_code.includes(query) ||
+      location.companies?.name.toLowerCase().includes(query) ||
+      location.phone?.includes(query)
+    )
+  })
+
   return (
     <div className="space-y-6">
       <Card className="border-border/50 p-6 shadow-sm">
@@ -300,6 +315,35 @@ export function ManageCompanyTests() {
           </form>
         )}
 
+        {/* Search Field */}
+        {!showForm && locations.length > 0 && (
+          <div className="mb-4 border-t pt-6">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search by name, address, city, state, zip, company, or phone..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 pr-10"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+            {searchQuery && (
+              <p className="mt-2 text-sm text-muted-foreground">
+                Found {filteredLocations.length} {filteredLocations.length === 1 ? 'location' : 'locations'}
+              </p>
+            )}
+          </div>
+        )}
+
         <div className="mt-6">
           {loading ? (
             <div className="text-center text-sm text-muted-foreground">Loading locations...</div>
@@ -307,9 +351,13 @@ export function ManageCompanyTests() {
             <div className="text-center text-sm text-muted-foreground">
               No locations added yet. Click "Add Location" to get started.
             </div>
+          ) : filteredLocations.length === 0 ? (
+            <div className="text-center text-sm text-muted-foreground">
+              No locations match your search. Try a different query.
+            </div>
           ) : (
             <div className="space-y-3">
-              {locations.map((location) => (
+              {filteredLocations.map((location) => (
                 <div
                   key={location.id}
                   className="flex items-center justify-between rounded-lg border border-border/50 p-4"
