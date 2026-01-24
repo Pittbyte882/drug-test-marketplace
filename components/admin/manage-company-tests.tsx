@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
-import { Plus, Edit, Trash2, Clock } from "lucide-react"
+import { Plus, Edit, Trash2 } from "lucide-react"
 
 interface Company {
   id: string
@@ -24,7 +24,6 @@ interface Location {
   state: string
   zip_code: string
   phone?: string
-  hours_of_operation?: string
   is_active: boolean
   companies?: { name: string }
 }
@@ -44,7 +43,6 @@ export function ManageCompanyTests() {
     state: "",
     zip_code: "",
     phone: "",
-    hours_of_operation: "",
   })
 
   useEffect(() => {
@@ -124,7 +122,6 @@ export function ManageCompanyTests() {
       state: location.state,
       zip_code: location.zip_code,
       phone: location.phone || "",
-      hours_of_operation: location.hours_of_operation || "",
     })
     setEditingId(location.id)
     setShowForm(true)
@@ -169,7 +166,6 @@ export function ManageCompanyTests() {
       state: "",
       zip_code: "",
       phone: "",
-      hours_of_operation: "",
     })
   }
 
@@ -274,32 +270,15 @@ export function ManageCompanyTests() {
               </div>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <Label htmlFor="phone">Phone</Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  placeholder="(555) 123-4567"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="hours">Hours of Operation</Label>
-                <Input
-                  id="hours"
-                  value={formData.hours_of_operation}
-                  onChange={(e) => setFormData({ ...formData, hours_of_operation: e.target.value })}
-                  placeholder="Mon-Fri: 8AM-5PM"
-                />
-              </div>
+            <div>
+              <Label htmlFor="phone">Phone</Label>
+              <Input
+                id="phone"
+                type="tel"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              />
             </div>
-
-            <p className="text-xs text-muted-foreground">
-              Example: Mon-Fri: 8AM-5PM, Sat: 9AM-2PM, Sun: Closed
-            </p>
 
             <div className="flex gap-2">
               <Button type="submit" className="bg-primary hover:bg-primary/90">
@@ -340,15 +319,9 @@ export function ManageCompanyTests() {
                     <p className="text-sm text-muted-foreground">
                       {location.address}, {location.city}, {location.state} {location.zip_code}
                     </p>
-                    <div className="mt-1 flex flex-wrap gap-4 text-xs text-muted-foreground">
+                    <div className="mt-1 flex gap-4 text-xs text-muted-foreground">
                       <span>Company: {location.companies?.name}</span>
                       {location.phone && <span>📞 {location.phone}</span>}
-                      {location.hours_of_operation && (
-                        <span className="flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          {location.hours_of_operation}
-                        </span>
-                      )}
                     </div>
                   </div>
                   <div className="flex gap-2">
