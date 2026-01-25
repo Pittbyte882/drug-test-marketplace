@@ -6,9 +6,10 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
-import { Plus, Edit, Trash2, Search, X } from "lucide-react"
+import { Plus, Edit, Trash2, Search, X, Clock } from "lucide-react"
 
 interface Company {
   id: string
@@ -24,6 +25,7 @@ interface Location {
   state: string
   zip_code: string
   phone?: string
+  hours_of_operation?: string
   is_active: boolean
   companies?: { name: string }
 }
@@ -44,6 +46,7 @@ export function ManageCompanyTests() {
     state: "",
     zip_code: "",
     phone: "",
+    hours_of_operation: "",
   })
 
   useEffect(() => {
@@ -123,6 +126,7 @@ export function ManageCompanyTests() {
       state: location.state,
       zip_code: location.zip_code,
       phone: location.phone || "",
+      hours_of_operation: location.hours_of_operation || "",
     })
     setEditingId(location.id)
     setShowForm(true)
@@ -167,6 +171,7 @@ export function ManageCompanyTests() {
       state: "",
       zip_code: "",
       phone: "",
+      hours_of_operation: "",
     })
   }
 
@@ -295,6 +300,21 @@ export function ManageCompanyTests() {
               />
             </div>
 
+            <div>
+              <Label htmlFor="hours_of_operation">Hours of Operation</Label>
+              <Textarea
+                id="hours_of_operation"
+                value={formData.hours_of_operation}
+                onChange={(e) => setFormData({ ...formData, hours_of_operation: e.target.value })}
+                placeholder="Monday: 08:00 AM - 04:30 PM&#10;Closed for Lunch: 11:30 AM - 12:30 PM&#10;Tuesday: 08:00 AM - 04:30 PM..."
+                rows={6}
+                className="font-mono text-sm"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Enter detailed hours for each day. Use format: "Day: Hours" on separate lines.
+              </p>
+            </div>
+
             <div className="flex gap-2">
               <Button type="submit" className="bg-primary hover:bg-primary/90">
                 {editingId ? "Update Location" : "Save Location"}
@@ -370,6 +390,12 @@ export function ManageCompanyTests() {
                     <div className="mt-1 flex gap-4 text-xs text-muted-foreground">
                       <span>Company: {location.companies?.name}</span>
                       {location.phone && <span>📞 {location.phone}</span>}
+                      {location.hours_of_operation && (
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {location.hours_of_operation.split('\n')[0]}
+                        </span>
+                      )}
                     </div>
                   </div>
                   <div className="flex gap-2">
