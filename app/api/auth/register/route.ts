@@ -81,9 +81,11 @@ export async function POST(request: Request) {
     // Send welcome email
     try {
       await resend.emails.send({
-        from: "Talcada <noreply@talcada.com>",
-        to: email,
-        subject: "Welcome to Talcada!",
+  from: "Talcada <noreply@test.talcada.com>",  // Changed from talcada.com
+  to: email.toLowerCase(),
+  subject: "Welcome to Talcada!",
+  // ... rest of email
+
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h1 style="color: #1e293b;">Welcome to Talcada, ${firstName}!</h1>

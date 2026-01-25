@@ -139,10 +139,11 @@ if (itemsData.length > 0) {
 
         if (orderWithDetails && orderWithDetails.order_items.length > 0) {
           await resend.emails.send({
-            from: "Talcada <noreply@talcada.com>",
-            to: customerEmail,
-            subject: `Order Confirmation - ${orderNumber}`,
-            html: `
+  from: "Talcada <noreply@test.talcada.com>",  // Changed from talcada.com
+  to: customerEmail,
+  subject: `Order Confirmation - ${orderNumber}`,
+  // ... rest of email
+ `
               <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                 <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 40px; text-align: center; color: white;">
                   <h1 style="margin: 0; font-size: 32px;">Order Confirmed!</h1>
