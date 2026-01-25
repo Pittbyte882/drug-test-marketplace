@@ -9,32 +9,51 @@ import Link from "next/link"
 
 export default function ConfirmationContent() {
   const searchParams = useSearchParams()
-  const orderNumber = searchParams.get("orderNumber")
+  const sessionId = searchParams.get("session_id") // Changed from orderNumber
   const [order, setOrder] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
 
   useEffect(() => {
     async function fetchOrder() {
-      if (!orderNumber) {
+      if (!sessionId) {
         setLoading(false)
+        setError(true)
         return
       }
 
       try {
-        const response = await fetch(`/api/orders/${orderNumber}`)
-        const data = await response.json()
-        if (data.success) {
-          setOrder(data.data)
+        // Retry logic to handle race condition with webhook
+        let attempts = 0
+        const maxAttempts = 5
+        
+        while (attempts < maxAttempts) {
+          const response = await fetch(`/api/orders/session/${sessionId}`)
+          const data = await response.json()
+          
+          if (data.success && data.data) {
+            setOrder(data.data)
+            setLoading(false)
+            return
+          }
+          
+          // Wait before retrying (exponential backoff)
+          await new Promise(resolve => setTimeout(resolve, 1000 * (attempts + 1)))
+          attempts++
         }
+        
+        // If we get here, all retries failed
+        setError(true)
       } catch (error) {
         console.error("Error fetching order:", error)
+        setError(true)
       } finally {
         setLoading(false)
       }
     }
 
     fetchOrder()
-  }, [orderNumber])
+  }, [sessionId])
 
   if (loading) {
     return (
@@ -47,13 +66,13 @@ export default function ConfirmationContent() {
     )
   }
 
-  if (!orderNumber || !order) {
+  if (error || !order) {
     return (
       <div className="container py-12">
         <Card className="mx-auto max-w-2xl p-8 text-center">
-          <h1 className="mb-4 text-2xl font-bold text-primary">Order Not Found</h1>
+          <h1 className="mb-4 text-2xl font-bold text-primary">Order Processing</h1>
           <p className="mb-6 text-muted-foreground">
-            We couldn't find your order. Please check your email for confirmation details.
+            Your payment was successful! You should receive a confirmation email shortly with your order details.
           </p>
           <Link href="/">
             <Button>Return to Home</Button>
