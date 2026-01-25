@@ -11,6 +11,7 @@ const supabase = createClient(
 )
 const resend = new Resend(process.env.RESEND_API_KEY!)
 
+
 export async function POST(request: Request) {
   const body = await request.text()
   const headersList = await headers()
@@ -71,25 +72,25 @@ export async function POST(request: Request) {
       console.log("✅ Order created:", orderNumber)
 
       // Create order items
-      if (itemsData.length > 0) {
-        const orderItems = itemsData.map((item: any) => ({
-          order_id: order.id,
-          test_id: item.test_id,
-          location_id: item.location_id,
-          quantity: item.quantity,
-          price: item.price,
-        }))
+if (itemsData.length > 0) {
+  const orderItems = itemsData.map((item: any) => ({
+    order_id: order.id,
+    test_id: item.test_id,
+    location_id: item.location_id,
+    quantity: item.quantity,
+    price: item.price,
+    company_id: item.company_id,  // ADD THIS LINE
+  }))
 
-        const { error: itemsError } = await supabase
-          .from("order_items")
-          .insert(orderItems)
+  const { error: itemsError } = await supabase
+    .from("order_items")
+    .insert(orderItems)
 
-        if (itemsError) {
-          console.error("Error creating order items:", itemsError)
-        } else {
-          console.log("✅ Order items created")
-        }
-
+  if (itemsError) {
+    console.error("Error creating order items:", itemsError)
+  } else {
+    console.log("✅ Order items created")
+  }
         // Create test results entries
         const testResults = itemsData.map((item: any) => ({
           order_id: order.id,
