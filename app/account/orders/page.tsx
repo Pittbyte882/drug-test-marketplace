@@ -2,42 +2,46 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { useAuth } from "@/lib/auth-context"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { SiteHeader } from "@/components/site-header"
-import { getCurrentUser } from "@/lib/auth"
 import { supabase } from "@/lib/supabase"
 import { ArrowLeft, Package } from "lucide-react"
 
 export default function OrderHistoryPage() {
   const router = useRouter()
+  const { customer, loading: authLoading } = useAuth()
   const [loading, setLoading] = useState(true)
   const [orders, setOrders] = useState<any[]>([])
 
   useEffect(() => {
-    loadOrders()
-  }, [])
+    if (!authLoading && !customer) {
+      router.push("/login")
+    }
+  }, [customer, authLoading, router])
+
+  useEffect(() => {
+    if (customer) {
+      loadOrders()
+    }
+  }, [customer])
 
   const loadOrders = async () => {
-    const user = await getCurrentUser()
-    
-    if (!user) {
-      router.push("/login")
-      return
-    }
+    if (!customer) return
 
     const { data } = await supabase
       .from('orders')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('customer_id', customer.id)
       .order('created_at', { ascending: false })
 
     setOrders(data || [])
     setLoading(false)
   }
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <>
         <SiteHeader />
@@ -48,15 +52,19 @@ export default function OrderHistoryPage() {
     )
   }
 
+  if (!customer) {
+    return null
+  }
+
   return (
     <>
       <SiteHeader />
       <div className="container py-12">
         <div className="mb-8">
-          <Link href="/account">
+          <Link href="/dashboard">
             <Button variant="ghost" className="mb-4 gap-2">
               <ArrowLeft className="h-4 w-4" />
-              Back to Account
+              Back to Dashboard
             </Button>
           </Link>
           <h1 className="text-3xl font-bold">Order History</h1>
@@ -98,7 +106,7 @@ export default function OrderHistoryPage() {
                   </div>
                   <div className="text-right">
                     <p className="text-2xl font-bold text-primary">
-                      ${order.total.toFixed(2)}
+                      ${order.total_amount.toFixed(2)}
                     </p>
                     <Button 
                       variant="outline" 

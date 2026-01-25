@@ -2,44 +2,40 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { useAuth } from "@/lib/auth-context"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { SiteHeader } from "@/components/site-header"
-import { getCurrentUser, getUserProfile, signOut } from "@/lib/auth"
 import { supabase } from "@/lib/supabase"
-import { User, Package, MapPin, Settings, LogOut } from "lucide-react"
+import { Package, MapPin, Settings, LogOut } from "lucide-react"
 
 export default function AccountPage() {
   const router = useRouter()
+  const { customer, loading: authLoading, logout } = useAuth()
   const [loading, setLoading] = useState(true)
-  const [user, setUser] = useState<any>(null)
-  const [profile, setProfile] = useState<any>(null)
   const [recentOrders, setRecentOrders] = useState<any[]>([])
 
   useEffect(() => {
-    loadAccountData()
-  }, [])
+    if (!authLoading && !customer) {
+      router.push("/login")
+    }
+  }, [customer, authLoading, router])
+
+  useEffect(() => {
+    if (customer) {
+      loadAccountData()
+    }
+  }, [customer])
 
   const loadAccountData = async () => {
-    const currentUser = await getCurrentUser()
-    
-    if (!currentUser) {
-      router.push("/login")
-      return
-    }
-
-    setUser(currentUser)
-
-    // Load profile
-    const userProfile = await getUserProfile(currentUser.id)
-    setProfile(userProfile)
+    if (!customer) return
 
     // Load recent orders
     const { data: orders } = await supabase
       .from('orders')
       .select('*')
-      .eq('user_id', currentUser.id)
+      .eq('customer_id', customer.id)
       .order('created_at', { ascending: false })
       .limit(5)
 
@@ -48,11 +44,11 @@ export default function AccountPage() {
   }
 
   const handleLogout = async () => {
-    await signOut()
+    logout()
     router.push("/")
   }
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <>
         <SiteHeader />
@@ -61,6 +57,10 @@ export default function AccountPage() {
         </div>
       </>
     )
+  }
+
+  if (!customer) {
+    return null
   }
 
   return (
@@ -72,7 +72,7 @@ export default function AccountPage() {
           <div>
             <h1 className="text-3xl font-bold">My Account</h1>
             <p className="text-muted-foreground">
-              Welcome back, {profile?.account_type === 'company' ? profile?.contact_person : profile?.full_name}
+              Welcome back, {customer.first_name} {customer.last_name}
             </p>
           </div>
           <Button onClick={handleLogout} variant="outline" className="gap-2">
@@ -87,18 +87,9 @@ export default function AccountPage() {
             <div>
               <h2 className="text-lg font-semibold mb-2">Account Information</h2>
               <div className="space-y-1 text-sm">
-                <p><strong>Email:</strong> {user?.email}</p>
-                <p><strong>Account Type:</strong> {profile?.account_type === 'company' ? 'Company' : 'Individual'}</p>
-                {profile?.account_type === 'company' && (
-                  <>
-                    <p><strong>Company:</strong> {profile?.company_name}</p>
-                    <p><strong>Contact Person:</strong> {profile?.contact_person}</p>
-                  </>
-                )}
-                {profile?.account_type === 'individual' && (
-                  <p><strong>Name:</strong> {profile?.full_name}</p>
-                )}
-                <p><strong>Phone:</strong> {profile?.phone}</p>
+                <p><strong>Email:</strong> {customer.email}</p>
+                <p><strong>Name:</strong> {customer.first_name} {customer.last_name}</p>
+                <p><strong>Phone:</strong> {customer.phone || 'Not provided'}</p>
               </div>
             </div>
             <Link href="/account/profile">
@@ -195,7 +186,7 @@ export default function AccountPage() {
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold">${order.total.toFixed(2)}</p>
+                    <p className="font-semibold">${order.total_amount.toFixed(2)}</p>
                     <Link href={`/account/orders/${order.id}`}>
                       <Button variant="ghost" size="sm">
                         View Details

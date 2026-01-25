@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { useAuth } from "@/lib/auth-context"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { SiteHeader } from "@/components/site-header"
-import { getCurrentUser } from "@/lib/auth"
 import { supabase } from "@/lib/supabase"
 import { ArrowLeft, MapPin, Trash2, Plus } from "lucide-react"
 import {
@@ -21,6 +21,7 @@ import {
 
 export default function AddressesPage() {
   const router = useRouter()
+  const { customer, loading: authLoading } = useAuth()
   const [loading, setLoading] = useState(true)
   const [addresses, setAddresses] = useState<any[]>([])
   const [showDialog, setShowDialog] = useState(false)
@@ -35,21 +36,24 @@ export default function AddressesPage() {
   })
 
   useEffect(() => {
-    loadAddresses()
-  }, [])
+    if (!authLoading && !customer) {
+      router.push("/login")
+    }
+  }, [customer, authLoading, router])
+
+  useEffect(() => {
+    if (customer) {
+      loadAddresses()
+    }
+  }, [customer])
 
   const loadAddresses = async () => {
-    const user = await getCurrentUser()
-    
-    if (!user) {
-      router.push("/login")
-      return
-    }
+    if (!customer) return
 
     const { data } = await supabase
       .from('saved_addresses')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('customer_id', customer.id)
       .order('is_default', { ascending: false })
 
     setAddresses(data || [])
@@ -60,21 +64,20 @@ export default function AddressesPage() {
     e.preventDefault()
     setSaving(true)
 
-    const user = await getCurrentUser()
-    if (!user) return
+    if (!customer) return
 
     // If setting as default, unset other defaults
     if (formData.is_default) {
       await supabase
         .from('saved_addresses')
         .update({ is_default: false })
-        .eq('user_id', user.id)
+        .eq('customer_id', customer.id)
     }
 
     const { error } = await supabase
       .from('saved_addresses')
       .insert({
-        user_id: user.id,
+        customer_id: customer.id,
         ...formData,
       })
 
@@ -108,14 +111,13 @@ export default function AddressesPage() {
   }
 
   const handleSetDefault = async (id: string) => {
-    const user = await getCurrentUser()
-    if (!user) return
+    if (!customer) return
 
     // Unset all defaults
     await supabase
       .from('saved_addresses')
       .update({ is_default: false })
-      .eq('user_id', user.id)
+      .eq('customer_id', customer.id)
 
     // Set new default
     await supabase
@@ -126,7 +128,7 @@ export default function AddressesPage() {
     loadAddresses()
   }
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <>
         <SiteHeader />
@@ -137,15 +139,19 @@ export default function AddressesPage() {
     )
   }
 
+  if (!customer) {
+    return null
+  }
+
   return (
     <>
       <SiteHeader />
       <div className="container py-12">
         <div className="max-w-4xl mx-auto">
-          <Link href="/account">
+          <Link href="/dashboard">
             <Button variant="ghost" className="mb-4 gap-2">
               <ArrowLeft className="h-4 w-4" />
-              Back to Account
+              Back to Dashboard
             </Button>
           </Link>
 
