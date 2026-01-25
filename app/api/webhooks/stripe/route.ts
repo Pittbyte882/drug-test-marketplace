@@ -7,11 +7,9 @@ import { Resend } from "resend"
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!  // ✅ Use service role key
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
-
 const resend = new Resend(process.env.RESEND_API_KEY!)
-
 
 export async function POST(request: Request) {
   const body = await request.text()
@@ -31,25 +29,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 })
   }
 
-  // Handle the checkout.session.completed event
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session
 
     try {
-      // Get metadata from session
       const customerId = session.metadata?.customer_id || null
       const customerName = session.metadata?.customer_name || ""
       const customerEmail = session.metadata?.customer_email || session.customer_email || ""
       const customerPhone = session.metadata?.customer_phone || ""
       const itemsData = JSON.parse(session.metadata?.items || "[]")
 
-      // Generate order number
       const orderNumber = `ORD-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`
-
-      // Calculate total
       const totalAmount = session.amount_total! / 100
 
-      // Create order in Supabase
       const { data: order, error: orderError } = await supabase
         .from("orders")
         .insert({
@@ -72,27 +64,26 @@ export async function POST(request: Request) {
 
       console.log("✅ Order created:", orderNumber)
 
-      // Create order items
-if (itemsData.length > 0) {
-  const orderItems = itemsData.map((item: any) => ({
-    order_id: order.id,
-    test_id: item.test_id,
-    location_id: item.location_id,
-    quantity: item.quantity,
-    price: item.price,
-    company_id: item.company_id,  // ADD THIS LINE
-  }))
+      if (itemsData.length > 0) {
+        const orderItems = itemsData.map((item: any) => ({
+          order_id: order.id,
+          test_id: item.test_id,
+          location_id: item.location_id,
+          quantity: item.quantity,
+          price: item.price,
+          company_id: item.company_id,
+        }))
 
-  const { error: itemsError } = await supabase
-    .from("order_items")
-    .insert(orderItems)
+        const { error: itemsError } = await supabase
+          .from("order_items")
+          .insert(orderItems)
 
-  if (itemsError) {
-    console.error("Error creating order items:", itemsError)
-  } else {
-    console.log("✅ Order items created")
-  }
-        // Create test results entries
+        if (itemsError) {
+          console.error("Error creating order items:", itemsError)
+        } else {
+          console.log("✅ Order items created")
+        }
+
         const testResults = itemsData.map((item: any) => ({
           order_id: order.id,
           customer_id: customerId,
@@ -113,9 +104,7 @@ if (itemsData.length > 0) {
         }
       }
 
-      // Send confirmation email
       try {
-        // Fetch order details with all related data
         const { data: orderWithDetails } = await supabase
           .from("orders")
           .select(`
@@ -139,11 +128,10 @@ if (itemsData.length > 0) {
 
         if (orderWithDetails && orderWithDetails.order_items.length > 0) {
           await resend.emails.send({
-  from: "Talcada <noreply@test.talcada.com>",  // Changed from talcada.com
-  to: customerEmail,
-  subject: `Order Confirmation - ${orderNumber}`,
-  // ... rest of email
- `
+            from: "Talcada <noreply@test.talcada.com>",
+            to: customerEmail,
+            subject: `Order Confirmation - ${orderNumber}`,
+            html: `
               <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                 <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 40px; text-align: center; color: white;">
                   <h1 style="margin: 0; font-size: 32px;">Order Confirmed!</h1>
@@ -218,7 +206,6 @@ if (itemsData.length > 0) {
         }
       } catch (emailError) {
         console.error("❌ Failed to send confirmation email:", emailError)
-        // Don't fail the webhook if email fails
       }
 
       console.log("✅ Webhook processing complete for order:", orderNumber)
