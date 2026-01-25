@@ -192,12 +192,13 @@ export default function RegisterPage() {
               </div>
 
               <div>
-                <Label htmlFor="phone">Phone (Optional)</Label>
+                <Label htmlFor="phone">Phone *(Mandatory)</Label>
                 <Input
                   id="phone"
                   type="tel"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  required
                   disabled={loading}
                   placeholder="(555) 123-4567"
                 />
