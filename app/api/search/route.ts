@@ -115,7 +115,7 @@ const { data: locations, error: locationsError } = await supabase
     }
 
     // Filter locations within 60 miles
-    const RADIUS_MILES = 60
+    const RADIUS_MILES = 100
     const nearbyLocations = (locations || [])
       .map(location => ({
         ...location,
