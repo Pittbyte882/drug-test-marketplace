@@ -98,7 +98,11 @@ export async function GET(request: Request) {
 
     console.log("Search coordinates:", searchCoords)
 
-    // Get ALL active locations with coordinates from active companies
+// Calculate bounding box (approximately 100 miles in each direction)
+const latDelta = 1.5 // roughly 100 miles
+const lngDelta = 1.5 // roughly 100 miles
+
+// Get locations within bounding box from active companies
 const { data: locations, error: locationsError } = await supabase
   .from("locations")
   .select(`
@@ -106,18 +110,24 @@ const { data: locations, error: locationsError } = await supabase
     companies!inner (*)
   `)
   .eq("is_active", true)
-  .eq("companies.is_active", true)  // Add this line - only active companies
+  .eq("companies.is_active", true)
   .not("latitude", "is", null)
   .not("longitude", "is", null)
-    if (locationsError) {
-      console.error("Supabase error:", locationsError)
-      throw locationsError
-    }
-    console.log(`Total locations fetched from database: ${locations?.length || 0}`)  // ADD THIS
-    console.log(`First location:`, locations?.[0])  // ADD THIS
-    
-    // Filter locations within 60 miles
-    const RADIUS_MILES = 100
+  .gte("latitude", searchCoords.lat - latDelta)
+  .lte("latitude", searchCoords.lat + latDelta)
+  .gte("longitude", searchCoords.lng - lngDelta)
+  .lte("longitude", searchCoords.lng + lngDelta)
+
+if (locationsError) {
+  console.error("Supabase error:", locationsError)
+  throw locationsError
+}
+
+console.log(`Total locations fetched from database: ${locations?.length || 0}`)
+console.log(`First location:`, locations?.[0])
+
+// Filter locations within 100 miles using precise distance calculation
+const RADIUS_MILES = 100
     const nearbyLocations = (locations || [])
       .map(location => ({
         ...location,
