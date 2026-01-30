@@ -113,7 +113,9 @@ const { data: locations, error: locationsError } = await supabase
       console.error("Supabase error:", locationsError)
       throw locationsError
     }
-
+    console.log(`Total locations fetched from database: ${locations?.length || 0}`)  // ADD THIS
+    console.log(`First location:`, locations?.[0])  // ADD THIS
+    
     // Filter locations within 60 miles
     const RADIUS_MILES = 100
     const nearbyLocations = (locations || [])
