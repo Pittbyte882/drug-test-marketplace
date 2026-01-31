@@ -15,7 +15,8 @@ import {
   ShoppingCart, 
   Clock,
   X,
-  ChevronDown
+  ChevronDown,
+  ChevronUp
 } from "lucide-react"
 import { useCart } from "@/lib/cart-context"
 import { useToast } from "@/hooks/use-toast"
@@ -108,6 +109,7 @@ export function TestCategoryCards({
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [visibleTests, setVisibleTests] = useState(6)
+  const [expandedTestId, setExpandedTestId] = useState<string | null>(null)
   const { addItem } = useCart()
   const { toast } = useToast()
 
@@ -162,11 +164,17 @@ export function TestCategoryCards({
       setSelectedCategory(null)
       setSearchQuery("")
       setVisibleTests(6)
+      setExpandedTestId(null)
     } else {
       setSelectedCategory(slug)
       setSearchQuery("")
       setVisibleTests(6)
+      setExpandedTestId(null)
     }
+  }
+
+  const toggleTestInfo = (testId: string) => {
+    setExpandedTestId(expandedTestId === testId ? null : testId)
   }
 
   const handleAddToCart = (test: Test) => {
@@ -331,61 +339,85 @@ export function TestCategoryCards({
           ) : (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-                {filteredTests.slice(0, visibleTests).map((test, index) => (
-                  <Card
-                    key={test.id}
-                    className={`
-                      p-4 border-2 border-border/50 bg-white shadow-sm 
-                      transition-all duration-300 hover:shadow-md hover:border-primary/50
-                      animate-in fade-in-0 slide-in-from-bottom-2
-                    `}
-                    style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'both' }}
-                  >
-                    <div className="flex flex-col h-full">
-                      {/* Test Name & Badge */}
-                      <div className="flex-1">
-                        <div className="flex flex-wrap items-start gap-2 mb-2">
-                          <h5 className="font-medium text-primary text-sm md:text-base leading-tight flex-1">
-                            {test.name}
-                          </h5>
-                          <Badge variant="secondary" className="text-xs shrink-0">
-                            {test.test_type}
-                          </Badge>
+                {filteredTests.slice(0, visibleTests).map((test, index) => {
+                  const isExpanded = expandedTestId === test.id
+                  
+                  return (
+                    <Card
+                      key={test.id}
+                      className={`
+                        p-4 border-2 border-border/50 bg-white shadow-sm 
+                        transition-all duration-300 hover:shadow-md hover:border-primary/50
+                        animate-in fade-in-0 slide-in-from-bottom-2
+                      `}
+                      style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'both' }}
+                    >
+                      <div className="flex flex-col h-full">
+                        {/* Test Name & Badge */}
+                        <div className="flex-1">
+                          <div className="flex flex-wrap items-start gap-2 mb-2">
+                            <h5 className="font-medium text-primary text-sm md:text-base leading-tight flex-1">
+                              {test.name}
+                            </h5>
+                            <Badge variant="secondary" className="text-xs shrink-0">
+                              {test.test_type}
+                            </Badge>
+                          </div>
+
+                          {/* Description - Truncated or Full */}
+                          {test.description && (
+                            <>
+                              <p className={`text-xs md:text-sm text-muted-foreground mb-2 ${isExpanded ? '' : 'line-clamp-2'}`}>
+                                {test.description}
+                              </p>
+                              
+                              {/* More Info Toggle */}
+                              <button
+                                onClick={() => toggleTestInfo(test.id)}
+                                className="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80 transition-colors mb-2"
+                              >
+                                {isExpanded ? (
+                                  <>
+                                    Less Info
+                                    <ChevronUp className="h-3 w-3" />
+                                  </>
+                                ) : (
+                                  <>
+                                    More Info
+                                    <ChevronDown className="h-3 w-3" />
+                                  </>
+                                )}
+                              </button>
+                            </>
+                          )}
+
+                          {/* Turnaround Time */}
+                          {test.turnaround_time && (
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground mb-3">
+                              <Clock className="h-3 w-3" />
+                              <span>Results in {test.turnaround_time}</span>
+                            </div>
+                          )}
                         </div>
 
-                        {/* Description */}
-                        {test.description && (
-                          <p className="text-xs md:text-sm text-muted-foreground line-clamp-2 mb-2">
-                            {test.description}
-                          </p>
-                        )}
-
-                        {/* Turnaround Time */}
-                        {test.turnaround_time && (
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground mb-3">
-                            <Clock className="h-3 w-3" />
-                            <span>Results in {test.turnaround_time}</span>
-                          </div>
-                        )}
+                        {/* Price & Add to Cart */}
+                        <div className="flex items-center justify-between pt-3 border-t border-border/50">
+                          <span className="text-lg md:text-xl font-bold text-primary">
+                            ${test.price.toFixed(2)}
+                          </span>
+                          <Button
+                            onClick={() => handleAddToCart(test)}
+                            size="sm"
+                            className="bg-primary hover:bg-primary/90 shadow-md"
+                          >
+                            <ShoppingCart className="mr-1.5 h-3.5 w-3.5" />
+                            Add
+                          </Button>
+                        </div>
                       </div>
-
-                      {/* Price & Add to Cart */}
-                      <div className="flex items-center justify-between pt-3 border-t border-border/50">
-                        <span className="text-lg md:text-xl font-bold text-primary">
-                          ${test.price.toFixed(2)}
-                        </span>
-                        <Button
-                          onClick={() => handleAddToCart(test)}
-                          size="sm"
-                          className="bg-primary hover:bg-primary/90 shadow-md"
-                        >
-                          <ShoppingCart className="mr-1.5 h-3.5 w-3.5" />
-                          Add
-                        </Button>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
+                    </Card>
+                  )
+                })}
               </div>
 
               {/* Load More Button */}
