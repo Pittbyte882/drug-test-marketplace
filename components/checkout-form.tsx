@@ -390,7 +390,7 @@ export function CheckoutForm() {
                             onClick={() => handleOpenEmployeeModal(testKey)}
                             className="text-blue-600 hover:text-blue-700 font-semibold text-base underline decoration-2 underline-offset-4 hover:decoration-blue-700 transition-colors"
                           >
-                            Order Test for Someone Else
+                            ADD PERSON TO TEST
                           </button>
                         </div>
                       )}
