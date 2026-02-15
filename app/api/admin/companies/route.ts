@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server"
-import { supabase } from "@/lib/supabase"
+import { supabaseAdmin } from "@/lib/supabase-admin"  // ✅ Changed this line
 
 // GET all companies (only active)
 export async function GET() {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin  // ✅ Changed
       .from('companies')
       .select('*')
-      .eq('is_active', true)  // Only show active companies
+      .eq('is_active', true)
       .order('created_at', { ascending: false })
 
     if (error) throw error
@@ -18,12 +18,13 @@ export async function GET() {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 })
   }
 }
+
 // POST - Create new company
 export async function POST(request: Request) {
   try {
     const data = await request.json()
 
-    const { data: company, error } = await supabase
+    const { data: company, error } = await supabaseAdmin  // ✅ Changed
       .from('companies')
       .insert({
         name: data.name,
@@ -54,7 +55,7 @@ export async function PUT(request: Request) {
   try {
     const { id, ...updateData } = await request.json()
 
-    const { data: company, error } = await supabase
+    const { data: company, error } = await supabaseAdmin  // ✅ Changed
       .from('companies')
       .update(updateData)
       .eq('id', id)
@@ -83,8 +84,7 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ success: false, error: "Company ID required" }, { status: 400 })
     }
 
-    // Soft delete - set is_active to false
-    const { error } = await supabase
+    const { error } = await supabaseAdmin  // ✅ Changed
       .from('companies')
       .update({ is_active: false })
       .eq('id', id)
