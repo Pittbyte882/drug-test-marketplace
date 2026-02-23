@@ -6,6 +6,7 @@ import { LogOut } from "lucide-react"
 import { ManageCompanies } from "./admin/manage-companies"
 import { ManageTests } from "./admin/manage-tests"
 import { ManageCompanyTests } from "./admin/manage-company-tests"
+import { ManageOrders } from "@/components/admin/manage-orders"
 
 export function AdminDashboard() {
   const handleLogout = async () => {
@@ -46,7 +47,11 @@ export function AdminDashboard() {
         <TabsContent value="locations">
           <ManageCompanyTests />
         </TabsContent>
+        <TabsContent value="orders">
+            <ManageOrders />
+          </TabsContent>
       </Tabs>
+
     </div>
   )
 }
