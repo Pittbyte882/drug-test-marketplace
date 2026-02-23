@@ -255,8 +255,10 @@ export function ManageTests() {
                   <SelectContent>
                     <SelectItem value="drug">Drug Test</SelectItem>
                     <SelectItem value="alcohol">Alcohol Test</SelectItem>
+                    <SelectItem value="hair">Hair Test</SelectItem>
                     <SelectItem value="dna">DNA Test</SelectItem>
                     <SelectItem value="blood">Blood Test</SelectItem>
+                    <SelectItem value="oral">Oral Fluid Test</SelectItem>
                     <SelectItem value="background">Background Check</SelectItem>
                   </SelectContent>
                 </Select>
