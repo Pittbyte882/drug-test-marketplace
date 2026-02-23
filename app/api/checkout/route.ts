@@ -2,7 +2,8 @@ import { NextResponse } from "next/server"
 import { cookies } from "next/headers"
 import { jwtVerify } from "jose"
 import Stripe from "stripe"
-import { createClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase"
+
 import { Resend } from "resend"
 import { generateOrderConfirmationEmail } from "@/lib/email-templates"
 
