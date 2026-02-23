@@ -1,12 +1,12 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { CheckCircle, Loader2 } from "lucide-react"
 
-export default function ConfirmationPage() {
+function ConfirmationContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const sessionId = searchParams.get("session_id")
@@ -21,7 +21,6 @@ export default function ConfirmationPage() {
       return
     }
 
-    // Create order and send confirmation email
     fetch(`/api/checkout?session_id=${sessionId}`)
       .then((res) => res.json())
       .then((data) => {
@@ -86,14 +85,27 @@ export default function ConfirmationPage() {
         )}
 
         <div className="mt-8 flex justify-center gap-4">
-          <Button onClick={() => router.push("/")}>
-            Return Home
-          </Button>
+          <Button onClick={() => router.push("/")}>Return Home</Button>
           <Button variant="outline" onClick={() => router.push("/search")}>
             Book Another Test
           </Button>
         </div>
       </Card>
     </div>
+  )
+}
+
+export default function ConfirmationPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="container mx-auto py-20 text-center">
+          <Loader2 className="mx-auto h-12 w-12 animate-spin text-primary" />
+          <p className="mt-4 text-muted-foreground">Loading...</p>
+        </div>
+      }
+    >
+      <ConfirmationContent />
+    </Suspense>
   )
 }
