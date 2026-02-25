@@ -26,6 +26,7 @@ interface RegisterData {
   firstName: string
   lastName: string
   phone?: string
+  dateOfBirth?: string | null
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)

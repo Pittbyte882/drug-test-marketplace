@@ -14,7 +14,7 @@ const resend = new Resend(process.env.RESEND_API_KEY!)
 
 export async function POST(request: Request) {
   try {
-    const { email, password, firstName, lastName, phone } = await request.json()
+    const { email, password, firstName, lastName, phone, dateOfBirth } = await request.json()
 
     // Validate input
     if (!email || !password || !firstName || !lastName) {
@@ -50,8 +50,9 @@ export async function POST(request: Request) {
         first_name: firstName,
         last_name: lastName,
         phone: phone || null,
+        date_of_birth: dateOfBirth || null,
       })
-      .select("id, email, first_name, last_name, phone")
+      .select("id, email, first_name, last_name, phone, date_of_birth")
       .single()
 
     if (error) {
