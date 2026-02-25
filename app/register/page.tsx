@@ -25,78 +25,111 @@ export default function RegisterPage() {
     companyName: "",
     email: "",
     phone: "",
+    dateOfBirth: "",
     password: "",
     confirmPassword: "",
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault()
+    e.preventDefault()
 
-  if (formData.password !== formData.confirmPassword) {
-    toast({
-      title: "Error",
-      description: "Passwords do not match",
-      variant: "destructive",
-    })
-    return
-  }
-
-  if (formData.password.length < 8) {
-    toast({
-      title: "Error",
-      description: "Password must be at least 8 characters",
-      variant: "destructive",
-    })
-    return
-  }
-
-  if (accountType === "company" && !formData.companyName) {
-    toast({
-      title: "Error",
-      description: "Company name is required",
-      variant: "destructive",
-    })
-    return
-  }
-
-  setLoading(true)
-
-  try {
-    // For company accounts, use company name as first name
-    const firstName = accountType === "company" ? formData.companyName : formData.firstName
-    const lastName = accountType === "company" ? "(Company)" : formData.lastName
-
-    const result = await register({
-      email: formData.email,
-      password: formData.password,
-      firstName: firstName,
-      lastName: lastName,
-      phone: formData.phone
-    })
-
-    if (result.success) {
-      toast({
-        title: "Success!",
-        description: "Your account has been created",
-      })
-      router.push("/dashboard")
-    } else {
+    if (formData.password !== formData.confirmPassword) {
       toast({
         title: "Error",
-        description: result.error || "Failed to create account",
+        description: "Passwords do not match",
         variant: "destructive",
       })
+      return
     }
-  } catch (error) {
-    toast({
-      title: "Error",
-      description: "Something went wrong. Please try again.",
-      variant: "destructive",
-    })
-  } finally {
-    setLoading(false)
+
+    if (formData.password.length < 8) {
+      toast({
+        title: "Error",
+        description: "Password must be at least 8 characters",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (accountType === "company" && !formData.companyName) {
+      toast({
+        title: "Error",
+        description: "Company name is required",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (accountType === "individual" && !formData.dateOfBirth) {
+      toast({
+        title: "Error",
+        description: "Date of birth is required",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Validate age (must be 18+)
+    if (accountType === "individual") {
+      const birthDate = new Date(formData.dateOfBirth)
+      const today = new Date()
+      const age = today.getFullYear() - birthDate.getFullYear()
+      const monthDiff = today.getMonth() - birthDate.getMonth()
+      
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--
+      }
+
+      if (age < 18) {
+        toast({
+          title: "Error",
+          description: "You must be at least 18 years old to register",
+          variant: "destructive",
+        })
+        return
+      }
+    }
+
+    setLoading(true)
+
+    try {
+      // For company accounts, use company name as first name
+      const firstName = accountType === "company" ? formData.companyName : formData.firstName
+      const lastName = accountType === "company" ? "(Company)" : formData.lastName
+
+      const result = await register({
+        email: formData.email,
+        password: formData.password,
+        firstName: firstName,
+        lastName: lastName,
+        phone: formData.phone,
+        dateOfBirth: accountType === "individual" ? formData.dateOfBirth : null,
+      })
+
+      if (result.success) {
+        toast({
+          title: "Success!",
+          description: "Your account has been created",
+        })
+        router.push("/dashboard")
+      } else {
+        toast({
+          title: "Error",
+          description: result.error || "Failed to create account",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
   }
-} // <-- This closes handleSubmit
+
   return (
     <CartProvider>
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50">
@@ -139,28 +172,46 @@ export default function RegisterPage() {
 
               {/* Individual Fields */}
               {accountType === "individual" && (
-                <div className="grid grid-cols-2 gap-4">
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="firstName">First Name *</Label>
+                      <Input
+                        id="firstName"
+                        value={formData.firstName}
+                        onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                        required
+                        disabled={loading}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="lastName">Last Name *</Label>
+                      <Input
+                        id="lastName"
+                        value={formData.lastName}
+                        onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                        required
+                        disabled={loading}
+                      />
+                    </div>
+                  </div>
+
                   <div>
-                    <Label htmlFor="firstName">First Name *</Label>
+                    <Label htmlFor="dateOfBirth">Date of Birth *</Label>
                     <Input
-                      id="firstName"
-                      value={formData.firstName}
-                      onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                      id="dateOfBirth"
+                      type="date"
+                      value={formData.dateOfBirth}
+                      onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
                       required
                       disabled={loading}
+                      max={new Date().toISOString().split('T')[0]}
                     />
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      You must be at least 18 years old
+                    </p>
                   </div>
-                  <div>
-                    <Label htmlFor="lastName">Last Name *</Label>
-                    <Input
-                      id="lastName"
-                      value={formData.lastName}
-                      onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                      required
-                      disabled={loading}
-                    />
-                  </div>
-                </div>
+                </>
               )}
 
               {/* Company Fields */}
@@ -192,7 +243,7 @@ export default function RegisterPage() {
               </div>
 
               <div>
-                <Label htmlFor="phone">Phone *(Mandatory)</Label>
+                <Label htmlFor="phone">Phone *</Label>
                 <Input
                   id="phone"
                   type="tel"
